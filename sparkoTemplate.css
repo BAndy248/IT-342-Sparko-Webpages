@@ -1,0 +1,110 @@
+.circle{
+    border-radius: 50%;
+    background-color: #FF72B1;
+    height: 40vh;
+    width:65vw;
+    z-index: 0;
+    position: relative;
+    bottom: -20vh;
+    
+}
+
+.circle2{
+    border-radius: 50%;
+    background-color: #FF72B1;
+    height: 40vh;
+    width:65vw;
+    z-index: 0;
+    position: relative;
+    bottom: -20vh;
+    right: 0vh;
+    transform: scale(1.1);
+    
+}
+
+.circle3{
+    border-radius: 50%;
+    background-color: #FF72B1;
+    height: 40vh;
+    width:65vw;
+    z-index: 0;
+    position: relative;
+    bottom: -20vh;
+    right: 0vh;
+    
+}
+
+
+footer{
+    background-color: #083D77;
+    height: 15vh;
+    z-index: 10;
+    position: relative;
+}
+
+
+header{
+    background-color: #083D77;
+    height: 15vh;
+    margin-top: 0%;
+}
+
+body{
+    margin: 0%;
+    background-color: #083D77;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.main-div{
+    background-color: #F4D35E;
+    min-height: 70vh;
+    overflow: hidden;
+    text-align: center;
+    position: relative; 
+    z-index: 0;
+}
+
+.home-page-button{
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 17.5vh;
+    color:#EE964B;
+    padding-left: 2vw; 
+    margin-top: 0;
+    overflow-x: hidden;
+    transform: translateY(-20%);
+    filter: drop-shadow(.5vh .5vh 0px #FF72B1) drop-shadow(.75vh .75vh 0px #083D77);
+    position: relative;
+    z-index: 10;
+}
+
+.membership-login{
+    font-family: "Harabara", sans-serif;
+    font-size: 4vh;
+    color:#F4D35E;
+    padding-right:1vw;
+    padding-top: 5vh;
+}
+
+.container{
+    display: flex;
+    justify-content: space-between;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@font-face {
+    font-family: 'Bauhaus\ 93\ Regular';
+    src: url('Fonts/Bauhaus\ 93\ Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Harabara';
+    src: url('Fonts/Harabara.ttf') format('truetype');
+}
