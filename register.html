@@ -1,8 +1,11 @@
 <!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Register</title>
-    <link rel="stylesheet" href="sparkoTemplate.css">
-    <link rel="stylesheet" href="loginStyle.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/loginStyle.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
 </head>
 <body>
@@ -13,48 +16,110 @@
     </header>
     <div class="main-div">
 
-        <div class="login-box">
+        <div class="login-box" style="min-height: 62vh;">
             <div class="login-title">Register</div>
+
+            <div id="error-msg" class="error-message"></div>
 
             <div class="login-container">
                 <div class="login-label">Username: </div>
-                <input type="text" id="User" class="login-input">
+                <input type="text" id="username" class="login-input" autocomplete="username">
             </div>
 
             <div class="login-container">
                 <div class="login-label">Email: </div>
-                <input type="text" id="Email" class="login-input">
+                <input type="email" id="email" class="login-input" autocomplete="email">
+            </div>
+
+            <div class="login-container">
+                <div class="login-label">First Name: </div>
+                <input type="text" id="first_name" class="login-input">
+            </div>
+
+            <div class="login-container">
+                <div class="login-label">Last Name: </div>
+                <input type="text" id="last_name" class="login-input">
             </div>
 
             <div class="login-container">
                 <div class="login-label">Password: </div>
-                <input type="password" id="Pass" class="login-input">
+                <input type="password" id="password" class="login-input" autocomplete="new-password">
             </div>
 
             <div class="login-container">
                 <div class="login-label">Confirm: </div>
-                <input type="password" id="Pass" class="login-input">
+                <input type="password" id="confirm" class="login-input" autocomplete="new-password">
             </div>
 
             <div class="login-button">
-                <button class="submit-button">Submit</button>
+                <button class="submit-button" id="register-btn" onclick="handleRegister()">Submit</button>
             </div>
 
             <div class="switch-login-register">
                 <p class="login-label">Returning user? <a href="login.html"><u>Login</u></a></p>
             </div>
-
-
         </div>
 
-        <div class="container">
+        <div class="circles-bg">
             <div class="circle"></div>
             <div class="circle2"></div>
             <div class="circle3"></div>
         </div>
 
     </div>
-    <footer>
+    <footer></footer>
 
-    </footer>
+    <script src="js/api.js"></script>
+    <script>
+        redirectIfLoggedIn();
+
+        document.getElementById('confirm').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleRegister();
+        });
+
+        async function handleRegister() {
+            const btn = document.getElementById('register-btn');
+            const errEl = document.getElementById('error-msg');
+            errEl.textContent = '';
+            btn.disabled = true;
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const first_name = document.getElementById('first_name').value.trim();
+            const last_name = document.getElementById('last_name').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+
+            if (!username || !email || !password || !confirm) {
+                errEl.textContent = 'Please fill in all required fields.';
+                btn.disabled = false;
+                return;
+            }
+
+            if (password !== confirm) {
+                errEl.textContent = 'Passwords do not match.';
+                btn.disabled = false;
+                return;
+            }
+
+            if (password.length < 8) {
+                errEl.textContent = 'Password must be at least 8 characters.';
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const data = await api.post('/auth/register', {
+                    username, email, password, first_name, last_name
+                });
+                api.setToken(data.token);
+                api.setUser(data.user);
+                window.location.href = '/dashboard.html';
+            } catch (err) {
+                errEl.textContent = err.message;
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
+</html>

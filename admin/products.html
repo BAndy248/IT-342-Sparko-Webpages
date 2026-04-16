@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management - Sparko Admin</title>
+    <link rel="stylesheet" href="../css/sparkoTemplate.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="icon" href="../Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="../index.html">Sparko</a> <span style="font-family:'Harabara',sans-serif; font-size:2vh; color:#FF72B1;">ADMIN</span></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="users.html">Users</a>
+            <a href="orders.html">Orders</a>
+            <a href="products.html" class="active">Products</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Product Management</h1>
+
+        <div id="products-container">
+            <div class="empty-state"><p>Loading...</p></div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh; margin-top: 4vh;">Add New Product</h2>
+
+        <div class="card" style="max-width: 600px;">
+            <div class="card-title">New Product</div>
+            <div id="add-msg" class="error-message" style="color:#ff4444;"></div>
+            <div id="add-success" class="success-message" style="color:#4CAF50;"></div>
+
+            <div class="form-group">
+                <label style="color:#F4D35E;">Name</label>
+                <input type="text" id="prod-name" style="max-width:300px; padding:1vh; border-radius:6px; border:none; font-family:'Harabara',sans-serif;">
+            </div>
+            <div class="form-group">
+                <label style="color:#F4D35E;">Description</label>
+                <input type="text" id="prod-desc" style="max-width:300px; padding:1vh; border-radius:6px; border:none; font-family:'Harabara',sans-serif;">
+            </div>
+            <div class="form-group">
+                <label style="color:#F4D35E;">Price ($)</label>
+                <input type="number" id="prod-price" step="0.01" min="0.01" style="max-width:150px; padding:1vh; border-radius:6px; border:none; font-family:'Harabara',sans-serif;">
+            </div>
+            <div class="form-group">
+                <label style="color:#F4D35E;">Size</label>
+                <input type="text" id="prod-size" placeholder="e.g. 5 Gallon, 16.9 oz Case" style="max-width:300px; padding:1vh; border-radius:6px; border:none; font-family:'Harabara',sans-serif;">
+            </div>
+            <div class="form-group">
+                <label style="color:#F4D35E;">Category</label>
+                <select id="prod-category" style="max-width:200px; padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif;">
+                    <option value="Spring">Spring</option>
+                    <option value="Purified">Purified</option>
+                    <option value="Alkaline">Alkaline</option>
+                    <option value="Sparkling">Sparkling</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
+        </div>
+    </div>
+
+    <!-- Edit Product Modal -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal">
+            <div class="modal-title">Edit Product</div>
+            <div id="edit-msg" class="error-message" style="text-align:left;"></div>
+            <div id="edit-success" class="success-message" style="text-align:left;"></div>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="edit-name">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="edit-desc">
+            </div>
+            <div class="form-group">
+                <label>Price ($)</label>
+                <input type="number" id="edit-price" step="0.01" min="0.01">
+            </div>
+            <div class="form-group">
+                <label>Size</label>
+                <input type="text" id="edit-size">
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="edit-category">
+                    <option value="Spring">Spring</option>
+                    <option value="Purified">Purified</option>
+                    <option value="Alkaline">Alkaline</option>
+                    <option value="Sparkling">Sparkling</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Available</label>
+                <select id="edit-available">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:1vh; margin-top:2vh;">
+                <button class="btn btn-primary" onclick="saveProduct()">Save</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service - Admin Panel</footer>
+
+    <script src="../js/api.js"></script>
+    <script>
+        if (!requireAdmin()) throw new Error('redirect');
+
+        let selectedProductId = null;
+        let productsCache = {};  // Store product data safely in JS instead of inline HTML
+        loadProducts();
+
+        async function loadProducts() {
+            const container = document.getElementById('products-container');
+            try {
+                const data = await api.get('/products');
+                productsCache = {};
+
+                if (data.products.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No products yet</h3><p>Add your first product below.</p></div>';
+                    return;
+                }
+
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>ID</th><th>Name</th><th>Size</th><th>Category</th><th>Price</th><th>Available</th><th>Action</th>';
+                html += '</tr></thead><tbody>';
+
+                for (const p of data.products) {
+                    // Cache product data in JS object — avoids injecting JSON into HTML attributes
+                    productsCache[p.id] = p;
+                    html += '<tr>';
+                    html += '<td>' + escapeHtml(String(p.id)) + '</td>';
+                    html += '<td>' + escapeHtml(p.name) + '</td>';
+                    html += '<td>' + escapeHtml(p.size || '-') + '</td>';
+                    html += '<td>' + escapeHtml(p.category || '-') + '</td>';
+                    html += '<td>' + escapeHtml(formatCurrency(p.price)) + '</td>';
+                    html += '<td>' + (p.is_available ? '<span class="badge badge-active">Yes</span>' : '<span class="badge badge-cancelled">No</span>') + '</td>';
+                    html += '<td><button class="btn btn-small btn-primary" onclick="editProduct(' + parseInt(p.id) + ')">Edit</button></td>';
+                    html += '</tr>';
+                }
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Error loading products.</p></div>';
+            }
+        }
+
+        async function addProduct() {
+            const errEl = document.getElementById('add-msg');
+            const successEl = document.getElementById('add-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            const name = document.getElementById('prod-name').value.trim();
+            const description = document.getElementById('prod-desc').value.trim();
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const size = document.getElementById('prod-size').value.trim();
+            const category = document.getElementById('prod-category').value;
+
+            if (!name || !price) {
+                errEl.textContent = 'Name and price are required.';
+                return;
+            }
+
+            try {
+                await api.post('/admin/products', { name, description, price, size, category });
+                successEl.textContent = 'Product added!';
+                document.getElementById('prod-name').value = '';
+                document.getElementById('prod-desc').value = '';
+                document.getElementById('prod-price').value = '';
+                document.getElementById('prod-size').value = '';
+                loadProducts();
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        function editProduct(id) {
+            const product = productsCache[id];
+            if (!product) return;
+            selectedProductId = product.id;
+            document.getElementById('edit-name').value = product.name || '';
+            document.getElementById('edit-desc').value = product.description || '';
+            document.getElementById('edit-price').value = product.price || '';
+            document.getElementById('edit-size').value = product.size || '';
+            document.getElementById('edit-category').value = product.category || 'Spring';
+            document.getElementById('edit-available').value = String(product.is_available);
+            document.getElementById('edit-msg').textContent = '';
+            document.getElementById('edit-success').textContent = '';
+            document.getElementById('product-modal').classList.add('active');
+        }
+
+        async function saveProduct() {
+            const errEl = document.getElementById('edit-msg');
+            const successEl = document.getElementById('edit-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            try {
+                await api.put('/admin/products/' + selectedProductId, {
+                    name: document.getElementById('edit-name').value.trim(),
+                    description: document.getElementById('edit-desc').value.trim(),
+                    price: parseFloat(document.getElementById('edit-price').value),
+                    size: document.getElementById('edit-size').value.trim(),
+                    category: document.getElementById('edit-category').value,
+                    is_available: document.getElementById('edit-available').value === 'true'
+                });
+                successEl.textContent = 'Product updated!';
+                loadProducts();
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('product-modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="profile.html" class="active">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">My Profile</h1>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; max-width: 900px;">
+            <!-- Profile Info -->
+            <div>
+                <h2 class="page-title" style="font-size: 2.5vh;">Personal Information</h2>
+                <div id="profile-msg" class="error-message" style="text-align:left;"></div>
+                <div id="profile-success" class="success-message" style="text-align:left;"></div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" disabled style="opacity:0.6;">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="first_name">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="last_name">
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="phone">
+                </div>
+                <button class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
+
+                <h2 class="page-title" style="font-size: 2.5vh; margin-top: 4vh;">Change Password</h2>
+                <div id="pw-msg" class="error-message" style="text-align:left;"></div>
+                <div id="pw-success" class="success-message" style="text-align:left;"></div>
+
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="current_password">
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="new_password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirm_password">
+                </div>
+                <button class="btn btn-secondary" onclick="changePassword()">Change Password</button>
+            </div>
+
+            <!-- Addresses -->
+            <div>
+                <h2 class="page-title" style="font-size: 2.5vh;">Delivery Addresses</h2>
+                <div id="addresses-container">
+                    <p>Loading...</p>
+                </div>
+
+                <h3 class="page-title" style="font-size: 2vh; margin-top: 3vh;">Add New Address</h3>
+                <div id="addr-msg" class="error-message" style="text-align:left;"></div>
+
+                <div class="form-group">
+                    <label>Street</label>
+                    <input type="text" id="addr-street">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="addr-city">
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" id="addr-state">
+                </div>
+                <div class="form-group">
+                    <label>ZIP Code</label>
+                    <input type="text" id="addr-zip" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="addr-default"> Set as default</label>
+                </div>
+                <button class="btn btn-primary" onclick="addAddress()">Add Address</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('redirect');
+
+        loadProfile();
+        loadAddresses();
+
+        async function loadProfile() {
+            try {
+                const data = await api.get('/users/profile');
+                const u = data.user;
+                document.getElementById('username').value = u.username;
+                document.getElementById('email').value = u.email || '';
+                document.getElementById('first_name').value = u.first_name || '';
+                document.getElementById('last_name').value = u.last_name || '';
+                document.getElementById('phone').value = u.phone || '';
+            } catch (err) {
+                console.error('Load profile error:', err);
+            }
+        }
+
+        async function updateProfile() {
+            const errEl = document.getElementById('profile-msg');
+            const successEl = document.getElementById('profile-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            try {
+                await api.put('/users/profile', {
+                    email: document.getElementById('email').value.trim(),
+                    first_name: document.getElementById('first_name').value.trim(),
+                    last_name: document.getElementById('last_name').value.trim(),
+                    phone: document.getElementById('phone').value.trim()
+                });
+                successEl.textContent = 'Profile updated!';
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        async function changePassword() {
+            const errEl = document.getElementById('pw-msg');
+            const successEl = document.getElementById('pw-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            const current_password = document.getElementById('current_password').value;
+            const new_password = document.getElementById('new_password').value;
+            const confirm = document.getElementById('confirm_password').value;
+
+            if (!current_password || !new_password || !confirm) {
+                errEl.textContent = 'Please fill in all fields.';
+                return;
+            }
+
+            if (new_password !== confirm) {
+                errEl.textContent = 'New passwords do not match.';
+                return;
+            }
+
+            try {
+                await api.put('/users/change-password', { current_password, new_password });
+                successEl.textContent = 'Password changed!';
+                document.getElementById('current_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        async function loadAddresses() {
+            try {
+                const data = await api.get('/users/addresses');
+                const container = document.getElementById('addresses-container');
+
+                if (data.addresses.length === 0) {
+                    container.innerHTML = '<p style="font-family:\'Harabara\',sans-serif; font-size:1.7vh; color:#083D77;">No addresses yet. Add one below.</p>';
+                    return;
+                }
+
+                let html = '';
+                for (const a of data.addresses) {
+                    html += '<div style="background:#083D77; border-radius:8px; padding:1.5vh 1.5vw; margin-bottom:1vh; display:flex; justify-content:space-between; align-items:center;">';
+                    html += '<div style="color:#F4D35E; font-family:\'Harabara\',sans-serif; font-size:1.7vh;">';
+                    html += escapeHtml(a.street) + '<br>' + escapeHtml(a.city) + ', ' + escapeHtml(a.state) + ' ' + escapeHtml(a.zip_code);
+                    if (a.is_default) html += '<br><span style="color:#FF72B1;">Default</span>';
+                    html += '</div>';
+                    html += '<button class="btn btn-small btn-danger" onclick="deleteAddress(' + a.id + ')">Delete</button>';
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Load addresses error:', err);
+            }
+        }
+
+        async function addAddress() {
+            const errEl = document.getElementById('addr-msg');
+            errEl.textContent = '';
+
+            const street = document.getElementById('addr-street').value.trim();
+            const city = document.getElementById('addr-city').value.trim();
+            const state = document.getElementById('addr-state').value.trim();
+            const zip_code = document.getElementById('addr-zip').value.trim();
+            const is_default = document.getElementById('addr-default').checked;
+
+            if (!street || !city || !state || !zip_code) {
+                errEl.textContent = 'Please fill in all address fields.';
+                return;
+            }
+
+            try {
+                await api.post('/users/addresses', { street, city, state, zip_code, is_default });
+                document.getElementById('addr-street').value = '';
+                document.getElementById('addr-city').value = '';
+                document.getElementById('addr-state').value = '';
+                document.getElementById('addr-zip').value = '';
+                document.getElementById('addr-default').checked = false;
+                loadAddresses();
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        async function deleteAddress(id) {
+            if (!confirm('Delete this address?')) return;
+            try {
+                await api.delete('/users/addresses/' + id);
+                loadAddresses();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    </script>
+</body>
+</html>

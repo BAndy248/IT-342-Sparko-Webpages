@@ -1,0 +1,342 @@
+/* Dashboard layout */
+.dashboard-header {
+    background-color: #083D77;
+    padding: 2vh 3vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: auto;
+    min-height: 10vh;
+}
+
+.dashboard-header .logo {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 6vh;
+    color: #EE964B;
+    filter: drop-shadow(.3vh .3vh 0px #FF72B1);
+}
+
+.dashboard-header .logo a {
+    color: #EE964B;
+}
+
+.dashboard-nav {
+    display: flex;
+    gap: 2vw;
+    align-items: center;
+}
+
+.dashboard-nav a, .dashboard-nav button {
+    font-family: "Harabara", sans-serif;
+    font-size: 2vh;
+    color: #F4D35E;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1vh 1.5vw;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.dashboard-nav a:hover, .dashboard-nav button:hover {
+    background-color: rgba(244, 211, 94, 0.15);
+}
+
+.dashboard-nav a.active {
+    background-color: rgba(244, 211, 94, 0.2);
+    border-bottom: 2px solid #FF72B1;
+}
+
+.dashboard-nav .logout-btn {
+    color: #FF72B1;
+}
+
+/* Main content area */
+.dashboard-content {
+    background-color: #F4D35E;
+    min-height: 80vh;
+    padding: 4vh 4vw;
+}
+
+.page-title {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 5vh;
+    color: #083D77;
+    margin-bottom: 3vh;
+}
+
+/* Cards */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2vh;
+    margin-bottom: 3vh;
+}
+
+.card {
+    background-color: #083D77;
+    border-radius: 12px;
+    padding: 3vh 2vw;
+    color: #F4D35E;
+}
+
+.card-title {
+    font-family: "Harabara", sans-serif;
+    font-size: 2vh;
+    color: #FF72B1;
+    margin-bottom: 1vh;
+}
+
+.card-value {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 5vh;
+    color: #EE964B;
+}
+
+.card-label {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    color: #F4D35E;
+    opacity: 0.8;
+}
+
+/* Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #083D77;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 3vh;
+}
+
+.data-table th {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    color: #FF72B1;
+    text-align: left;
+    padding: 2vh 1.5vw;
+    background-color: rgba(0,0,0,0.2);
+}
+
+.data-table td {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    color: #F4D35E;
+    padding: 1.5vh 1.5vw;
+    border-top: 1px solid rgba(244, 211, 94, 0.1);
+}
+
+.data-table tr:hover td {
+    background-color: rgba(244, 211, 94, 0.05);
+}
+
+/* Status badges */
+.badge {
+    display: inline-block;
+    padding: 0.5vh 1vw;
+    border-radius: 20px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.5vh;
+    font-weight: bold;
+}
+
+.badge-active, .badge-delivered { background-color: #4CAF50; color: white; }
+.badge-pending, .badge-confirmed { background-color: #EE964B; color: #083D77; }
+.badge-paused, .badge-out_for_delivery { background-color: #F4D35E; color: #083D77; }
+.badge-cancelled { background-color: #ff4444; color: white; }
+
+/* Buttons */
+.btn {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    padding: 1vh 2vw;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn:hover { opacity: 0.85; }
+
+.btn-primary {
+    background-color: #FF72B1;
+    color: #083D77;
+}
+
+.btn-secondary {
+    background-color: #EE964B;
+    color: #083D77;
+}
+
+.btn-danger {
+    background-color: #ff4444;
+    color: white;
+}
+
+.btn-small {
+    font-size: 1.5vh;
+    padding: 0.5vh 1vw;
+}
+
+/* Forms in dashboard */
+.form-group {
+    margin-bottom: 2vh;
+}
+
+.form-group label {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    color: #083D77;
+    display: block;
+    margin-bottom: 0.5vh;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    max-width: 400px;
+    padding: 1vh;
+    border: 2px solid #083D77;
+    border-radius: 6px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: #FF72B1;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 1vh;
+    justify-content: center;
+    margin-top: 2vh;
+}
+
+.pagination button {
+    font-family: "Harabara", sans-serif;
+    padding: 1vh 1.5vw;
+    border: 2px solid #083D77;
+    background: white;
+    color: #083D77;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.pagination button.active {
+    background-color: #083D77;
+    color: #F4D35E;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: #F4D35E;
+    border-radius: 12px;
+    padding: 4vh 3vw;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-title {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 3.5vh;
+    color: #083D77;
+    margin-bottom: 2vh;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 6vh 2vw;
+    color: #083D77;
+}
+
+.empty-state h3 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 3vh;
+    margin-bottom: 1vh;
+}
+
+.empty-state p {
+    font-family: "Harabara", sans-serif;
+    font-size: 2vh;
+    opacity: 0.7;
+    margin-bottom: 2vh;
+}
+
+/* Search bar */
+.search-bar {
+    display: flex;
+    gap: 1vw;
+    margin-bottom: 2vh;
+}
+
+.search-bar input {
+    flex: 1;
+    max-width: 400px;
+    padding: 1vh;
+    border: 2px solid #083D77;
+    border-radius: 6px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+}
+
+/* Filter bar */
+.filter-bar {
+    display: flex;
+    gap: 1vw;
+    margin-bottom: 2vh;
+    flex-wrap: wrap;
+}
+
+.filter-bar select {
+    padding: 1vh;
+    border: 2px solid #083D77;
+    border-radius: 6px;
+    font-family: "Harabara", sans-serif;
+    background: white;
+}
+
+/* Dashboard footer */
+.dashboard-footer {
+    background-color: #083D77;
+    padding: 3vh 3vw;
+    text-align: center;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    color: #F4D35E;
+    opacity: 0.7;
+}
+
+@font-face {
+    font-family: 'Bauhaus 93 Regular';
+    src: url('../Fonts/Bauhaus 93 Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Harabara';
+    src: url('../Fonts/Harabara.ttf') format('truetype');
+}
