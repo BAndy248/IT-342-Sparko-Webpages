@@ -10,7 +10,7 @@ CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,  -- bcrypt hash (includes salt)
+    password_hash VARCHAR(255) NOT NULL,  -- PBKDF2-HMAC-SHA512 (FIPS 140-2/3 approved), format: pbkdf2_sha512$iterations$salt_hex$hash_hex
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     phone VARCHAR(20),

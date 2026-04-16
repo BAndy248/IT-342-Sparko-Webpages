@@ -1,10 +1,16 @@
 -- Sparko Water Subscription Service - Seed Data
 USE sparko_water;
 
--- Default admin user (password: Admin123!)
--- Hash generated with bcrypt, 12 rounds
-INSERT INTO users (username, email, password_hash, first_name, last_name, role) VALUES
-('admin', 'admin@sparkowater.com', '$2b$12$placeholder.hash.replace.with.real.bcrypt.hash', 'Sparko', 'Admin', 'admin');
+-- Admin bootstrap:
+-- 1. Register a user through the app with your chosen admin password (this hashes with PBKDF2-HMAC-SHA512).
+-- 2. Promote them to admin with:
+--      UPDATE users SET role = 'admin' WHERE username = 'your_username';
+--
+-- Alternatively, generate a hash from the command line and INSERT directly:
+--      cd backend && node -e "require('./utils/password').hash('YourPassword!').then(console.log)"
+-- Then:
+--      INSERT INTO users (username, email, password_hash, first_name, last_name, role)
+--      VALUES ('admin', 'admin@sparkowater.com', '<paste_hash_here>', 'Sparko', 'Admin', 'admin');
 
 -- Sample products
 INSERT INTO products (name, description, price, size, category) VALUES
