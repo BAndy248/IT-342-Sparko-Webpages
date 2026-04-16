@@ -1,5 +1,17 @@
 const mysql = require('mysql2/promise');
 
+// DB_SSL controls TLS to the database.
+//   - "true"     → require SSL with verified CA (use for AWS RDS)
+//   - "relaxed"  → require SSL but skip CA verification (RDS without cert bundle)
+//   - "false" or unset → no SSL (self-hosted MariaDB/MySQL on EC2)
+// Since traffic stays inside the VPC between BE-SG and DB-SG, TLS is optional.
+let sslConfig = false;
+if (process.env.DB_SSL === 'true') {
+    sslConfig = { rejectUnauthorized: true };
+} else if (process.env.DB_SSL === 'relaxed') {
+    sslConfig = { rejectUnauthorized: false };
+}
+
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 3306,
@@ -9,10 +21,7 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    // AWS RDS SSL support
-    ...(process.env.NODE_ENV === 'production' && {
-        ssl: { rejectUnauthorized: true }
-    })
+    ssl: sslConfig
 });
 
 module.exports = pool;
