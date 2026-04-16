@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
-const { bcryptRounds } = require('../config/auth');
+const passwordUtil = require('../utils/password');
 
 // All user routes require authentication
 router.use(authenticate);
@@ -91,12 +90,12 @@ router.put('/change-password', [
             [req.user.id]
         );
 
-        const valid = await bcrypt.compare(current_password, users[0].password_hash);
+        const valid = await passwordUtil.verify(current_password, users[0].password_hash);
         if (!valid) {
             return res.status(401).json({ error: 'Current password is incorrect.' });
         }
 
-        const newHash = await bcrypt.hash(new_password, bcryptRounds);
+        const newHash = await passwordUtil.hash(new_password);
         await pool.execute(
             'UPDATE users SET password_hash = ? WHERE id = ?',
             [newHash, req.user.id]

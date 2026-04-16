@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
-const { jwtSecret, jwtExpiresIn, bcryptRounds, resetTokenExpiresHours } = require('../config/auth');
+const { jwtSecret, jwtExpiresIn, resetTokenExpiresHours } = require('../config/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
 const { authenticate } = require('../middleware/auth');
+const passwordUtil = require('../utils/password');
 
 // Apply stricter rate limiting to all auth routes
 router.use(authLimiter);
@@ -41,8 +41,9 @@ router.post('/register', [
             return res.status(409).json({ error: 'Username or email already registered.' });
         }
 
-        // Hash password with bcrypt (includes salt automatically)
-        const passwordHash = await bcrypt.hash(password, bcryptRounds);
+        // Hash password with PBKDF2-HMAC-SHA512 (FIPS 140-2/3 approved)
+        // Salt is generated inside the utility and embedded in the returned string
+        const passwordHash = await passwordUtil.hash(password);
 
         // Insert new user — parameterized query prevents SQL injection
         const [result] = await pool.execute(
@@ -92,8 +93,8 @@ router.post('/login', [
 
         const user = users[0];
 
-        // Compare provided password against stored bcrypt hash
-        const validPassword = await bcrypt.compare(password, user.password_hash);
+        // Constant-time comparison via PBKDF2 verify
+        const validPassword = await passwordUtil.verify(password, user.password_hash);
         if (!validPassword) {
             return res.status(401).json({ error: 'Invalid credentials.' });
         }
@@ -208,7 +209,7 @@ router.post('/reset-password', [
         }
 
         const resetRecord = tokens[0];
-        const passwordHash = await bcrypt.hash(password, bcryptRounds);
+        const passwordHash = await passwordUtil.hash(password);
 
         // Update password and mark token as used — both in a transaction
         const connection = await pool.getConnection();
