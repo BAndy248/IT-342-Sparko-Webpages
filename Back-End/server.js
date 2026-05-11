@@ -6,16 +6,34 @@ const path = require('path');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/sanitize');
 const { logger, requestLogger } = require('./utils/logger');
+const { loadSecrets } = require('./utils/secrets');
 
-// --- Validate required environment variables at startup ---
-const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'];
-const missing = required.filter(key => !process.env[key]);
-if (missing.length > 0) {
-    logger.error('startup_missing_env', { missing });
-    console.error('Missing required environment variables:', missing.join(', '));
-    console.error('Copy .env.example to .env and fill in values.');
-    process.exit(1);
-}
+// --- Load secrets from AWS Secrets Manager BEFORE validating env ---
+// This async IIFE keeps startup linear: secrets first, then env validation,
+// then app boot. On EC2 the env vars come from Secrets Manager; locally the
+// loader no-ops and we rely on the .env file already populated by dotenv.
+(async function start() {
+    try {
+        await loadSecrets();
+    } catch (err) {
+        logger.error('startup_secrets_failed', { error: err.message });
+        process.exit(1);
+    }
+
+    // --- Validate required environment variables at startup ---
+    const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'];
+    const missing = required.filter(key => !process.env[key]);
+    if (missing.length > 0) {
+        logger.error('startup_missing_env', { missing });
+        console.error('Missing required environment variables:', missing.join(', '));
+        console.error('Copy .env.example to .env and fill in values.');
+        process.exit(1);
+    }
+
+    bootServer();
+})();
+
+function bootServer() {
 
 const app = express();
 
@@ -123,3 +141,5 @@ process.on('uncaughtException', err => {
 process.on('unhandledRejection', reason => {
     logger.error('unhandled_rejection', { reason: reason && reason.message ? reason.message : String(reason) });
 });
+
+} // end bootServer()

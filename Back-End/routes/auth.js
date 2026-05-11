@@ -9,6 +9,7 @@ const { authLimiter } = require('../middleware/rateLimiter');
 const { authenticate } = require('../middleware/auth');
 const passwordUtil = require('../utils/password');
 const { logger } = require('../utils/logger');
+const { sendEmail } = require('../utils/email');
 
 // Apply stricter rate limiting to all auth routes
 router.use(authLimiter);
@@ -163,12 +164,45 @@ router.post('/forgot-password', [
             [users[0].id, tokenHash, expiresAt]
         );
 
-        // In production, send email with reset link containing resetToken
-        // For development, return the token directly
-        if (process.env.NODE_ENV === 'development') {
+        // Build the reset URL — FRONTEND_URL is set per-environment.
+        const baseUrl  = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
+
+        // Get the email to send to (we already loaded the id; re-select email
+        // so the closure doesn't accidentally leak it from the request body).
+        const [emailRows] = await pool.execute(
+            'SELECT email, first_name FROM users WHERE id = ?',
+            [users[0].id]
+        );
+        const recipient = emailRows[0];
+
+        // Fire-and-forget the SES send. If SES is unconfigured, sendEmail()
+        // logs and returns sent=false — which we treat as "still tell the
+        // user we sent it" to avoid leaking whether SES is wired up.
+        const result = await sendEmail({
+            to:      recipient.email,
+            subject: 'Reset your Sparko password',
+            text: [
+                `Hi ${recipient.first_name || ''},`.trim(),
+                ``,
+                `Someone (hopefully you) asked to reset your Sparko password.`,
+                `Open the link below within ${resetTokenExpiresHours} hour(s) to set a new one:`,
+                ``,
+                resetUrl,
+                ``,
+                `If you didn't request this, ignore this email — your password is unchanged.`,
+                ``,
+                `— Sparko Water`
+            ].join('\n')
+        });
+
+        // Dev convenience: when SES isn't configured (sent=false, mode=disabled),
+        // surface the token directly so local testing works without AWS.
+        if (!result.sent && process.env.NODE_ENV !== 'production') {
             return res.json({
-                message: 'Reset token generated (dev mode).',
+                message: 'Reset token generated (dev mode — SES not configured).',
                 resetToken,
+                resetUrl,
                 expiresAt
             });
         }

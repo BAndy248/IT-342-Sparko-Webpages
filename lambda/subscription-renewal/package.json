@@ -1,0 +1,12 @@
+{
+  "name": "sparko-subscription-renewal",
+  "version": "1.0.0",
+  "description": "Lambda that scans for due subscriptions and renews them.",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.600.0",
+    "@aws-sdk/client-sqs": "^3.600.0",
+    "@aws-sdk/client-sesv2": "^3.600.0",
+    "mysql2": "^3.11.0"
+  }
+}
