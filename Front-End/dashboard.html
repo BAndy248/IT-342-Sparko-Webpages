@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Welcome, <span id="user-name"></span></h1>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-title">Active Subscription</div>
+                <div class="card-value" id="sub-status">--</div>
+                <div class="card-label" id="sub-plan"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Next Delivery</div>
+                <div class="card-value" id="next-delivery">--</div>
+                <div class="card-label" id="delivery-freq"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Orders</div>
+                <div class="card-value" id="total-orders">--</div>
+                <div class="card-label">all time</div>
+            </div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh;">Recent Orders</h2>
+        <div id="recent-orders">
+            <div class="empty-state">
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh; margin-top: 3vh;">Quick Actions</h2>
+        <div style="display: flex; gap: 1vw; flex-wrap: wrap;">
+            <a href="subscription.html" class="btn btn-primary">Manage Subscription</a>
+            <a href="orders.html" class="btn btn-secondary">View All Orders</a>
+            <a href="profile.html" class="btn btn-secondary">Edit Profile</a>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('redirect');
+
+        const user = api.getUser();
+        setText('user-name', user.first_name || user.username);
+
+        loadDashboard();
+
+        async function loadDashboard() {
+            try {
+                // Load subscriptions
+                const subData = await api.get('/subscriptions');
+                const activeSub = subData.subscriptions.find(s => s.status === 'active');
+
+                if (activeSub) {
+                    setText('sub-status', 'Active');
+                    setText('sub-plan', activeSub.plan_name);
+                    setText('next-delivery', formatDate(activeSub.next_delivery));
+                    setText('delivery-freq', activeSub.frequency);
+                } else {
+                    setText('sub-status', 'None');
+                    setText('sub-plan', '');
+                    setText('next-delivery', 'N/A');
+                    setText('delivery-freq', 'No active subscription');
+                }
+
+                // Load recent orders
+                const orderData = await api.get('/orders?limit=5');
+                const container = document.getElementById('recent-orders');
+
+                if (orderData.orders.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No orders yet</h3><p>Subscribe to start receiving water deliveries!</p></div>';
+                    setText('total-orders', '0');
+                } else {
+                    setText('total-orders', orderData.pagination.total.toString());
+                    let html = '<table class="data-table"><thead><tr>';
+                    html += '<th>Order #</th><th>Date</th><th>Status</th><th>Total</th>';
+                    html += '</tr></thead><tbody>';
+
+                    for (const order of orderData.orders) {
+                        html += '<tr>';
+                        html += '<td>' + escapeHtml(String(order.id)) + '</td>';
+                        html += '<td>' + escapeHtml(formatDate(order.created_at)) + '</td>';
+                        html += '<td>' + statusBadge(order.status) + '</td>';
+                        html += '<td>' + escapeHtml(formatCurrency(order.total)) + '</td>';
+                        html += '</tr>';
+                    }
+
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+            }
+        }
+    </script>
+</body>
+</html>

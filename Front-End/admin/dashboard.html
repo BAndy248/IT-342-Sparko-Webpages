@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Sparko</title>
+    <link rel="stylesheet" href="../css/sparkoTemplate.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="icon" href="../Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="../index.html">Sparko</a> <span style="font-family:'Harabara',sans-serif; font-size:2vh; color:#FF72B1;">ADMIN</span></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="users.html">Users</a>
+            <a href="orders.html">Orders</a>
+            <a href="products.html">Products</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Admin Dashboard</h1>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-title">Total Users</div>
+                <div class="card-value" id="stat-users">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Active Subscriptions</div>
+                <div class="card-value" id="stat-subs">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Orders</div>
+                <div class="card-value" id="stat-orders">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Pending Orders</div>
+                <div class="card-value" id="stat-pending">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total Revenue</div>
+                <div class="card-value" id="stat-revenue">--</div>
+            </div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh; margin-top: 3vh;">Quick Links</h2>
+        <div style="display: flex; gap: 1vw; flex-wrap: wrap;">
+            <a href="users.html" class="btn btn-primary">Manage Users</a>
+            <a href="orders.html" class="btn btn-secondary">Manage Orders</a>
+            <a href="products.html" class="btn btn-secondary">Manage Products</a>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service - Admin Panel</footer>
+
+    <script src="../js/api.js"></script>
+    <script>
+        if (!requireAdmin()) throw new Error('redirect');
+
+        loadStats();
+
+        async function loadStats() {
+            try {
+                const data = await api.get('/admin/stats');
+                const s = data.stats;
+                setText('stat-users', String(s.total_users));
+                setText('stat-subs', String(s.active_subscriptions));
+                setText('stat-orders', String(s.total_orders));
+                setText('stat-pending', String(s.pending_orders));
+                setText('stat-revenue', formatCurrency(s.total_revenue));
+            } catch (err) {
+                console.error('Load stats error:', err);
+            }
+        }
+    </script>
+</body>
+</html>

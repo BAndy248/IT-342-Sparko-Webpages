@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparko - Water Delivery Service</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="home-page-button">
+                <a href="index.html">Sparko</a>
+            </div>
+            <div class="membership-login" id="nav-link">
+                <a href="login.html">Members</a>
+            </div>
+        </div>
+    </header>
+    <div class="main-div">
+        <img src="Images/SparkoLogo.svg" width="500" height="500" alt="Sparko Logo">
+        <span class="container">
+            <div class="circle"></div>
+            <div class="circle2"></div>
+            <div class="circle3"></div>
+        </span>
+    </div>
+    <footer></footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Update nav if already logged in
+        if (api.isLoggedIn()) {
+            const navLink = document.getElementById('nav-link');
+            navLink.innerHTML = '<a href="' + (api.isAdmin() ? '/admin/dashboard.html' : '/dashboard.html') + '">Dashboard</a>';
+        }
+    </script>
+</body>
+</html>

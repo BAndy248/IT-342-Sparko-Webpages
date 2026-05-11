@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Sparko Admin</title>
+    <link rel="stylesheet" href="../css/sparkoTemplate.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="icon" href="../Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="../index.html">Sparko</a> <span style="font-family:'Harabara',sans-serif; font-size:2vh; color:#FF72B1;">ADMIN</span></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="users.html" class="active">Users</a>
+            <a href="orders.html">Orders</a>
+            <a href="products.html">Products</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">User Management</h1>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search by username, email, or name..." onkeydown="if(event.key==='Enter') loadUsers()">
+            <button class="btn btn-primary" onclick="loadUsers()">Search</button>
+        </div>
+
+        <div id="users-container">
+            <div class="empty-state"><p>Loading...</p></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Role/Status Modal -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal">
+            <div class="modal-title">Edit User: <span id="modal-username"></span></div>
+            <div id="modal-msg" class="error-message" style="text-align:left;"></div>
+            <div id="modal-success" class="success-message" style="text-align:left;"></div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <div id="modal-email" style="font-family:'Harabara',sans-serif;"></div>
+            </div>
+            <div class="form-group">
+                <label>Joined</label>
+                <div id="modal-joined" style="font-family:'Harabara',sans-serif;"></div>
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="modal-role" style="padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif; max-width:200px;">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="modal-status" style="padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif; max-width:200px;">
+                    <option value="true">Active</option>
+                    <option value="false">Deactivated</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:1vh; margin-top:2vh;">
+                <button class="btn btn-primary" onclick="saveUser()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service - Admin Panel</footer>
+
+    <script src="../js/api.js"></script>
+    <script>
+        if (!requireAdmin()) throw new Error('redirect');
+
+        let selectedUserId = null;
+        loadUsers();
+
+        async function loadUsers(page = 1) {
+            const search = document.getElementById('search-input').value.trim();
+            const container = document.getElementById('users-container');
+
+            try {
+                let url = '/admin/users?page=' + page + '&limit=15';
+                if (search) url += '&search=' + encodeURIComponent(search);
+
+                const data = await api.get(url);
+
+                if (data.users.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No users found</h3></div>';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>ID</th><th>Username</th><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Joined</th><th>Action</th>';
+                html += '</tr></thead><tbody>';
+
+                for (const u of data.users) {
+                    html += '<tr>';
+                    html += '<td>' + escapeHtml(String(u.id)) + '</td>';
+                    html += '<td>' + escapeHtml(u.username) + '</td>';
+                    html += '<td>' + escapeHtml(u.email) + '</td>';
+                    html += '<td>' + escapeHtml((u.first_name || '') + ' ' + (u.last_name || '')).trim() + '</td>';
+                    html += '<td>' + statusBadge(u.role === 'admin' ? 'active' : 'pending').replace(u.role === 'admin' ? 'active' : 'pending', escapeHtml(u.role)) + '</td>';
+                    html += '<td>' + (u.is_active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>') + '</td>';
+                    html += '<td>' + escapeHtml(formatDate(u.created_at)) + '</td>';
+                    html += '<td><button class="btn btn-small btn-primary" onclick="editUser(' + u.id + ',\'' + escapeHtml(u.username) + '\',\'' + escapeHtml(u.email) + '\',\'' + escapeHtml(u.role) + '\',' + u.is_active + ',\'' + escapeHtml(u.created_at) + '\')">Edit</button></td>';
+                    html += '</tr>';
+                }
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                // Pagination
+                const pag = data.pagination;
+                let pagHtml = '';
+                pagHtml += '<button ' + (pag.page <= 1 ? 'disabled' : '') + ' onclick="loadUsers(' + (pag.page - 1) + ')">Prev</button>';
+                for (let i = 1; i <= pag.pages; i++) {
+                    pagHtml += '<button class="' + (i === pag.page ? 'active' : '') + '" onclick="loadUsers(' + i + ')">' + i + '</button>';
+                }
+                pagHtml += '<button ' + (pag.page >= pag.pages ? 'disabled' : '') + ' onclick="loadUsers(' + (pag.page + 1) + ')">Next</button>';
+                document.getElementById('pagination').innerHTML = pagHtml;
+
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Error loading users.</p></div>';
+            }
+        }
+
+        function editUser(id, username, email, role, isActive, joined) {
+            selectedUserId = id;
+            setText('modal-username', username);
+            setText('modal-email', email);
+            setText('modal-joined', formatDate(joined));
+            document.getElementById('modal-role').value = role;
+            document.getElementById('modal-status').value = String(isActive);
+            document.getElementById('modal-msg').textContent = '';
+            document.getElementById('modal-success').textContent = '';
+            document.getElementById('user-modal').classList.add('active');
+        }
+
+        async function saveUser() {
+            const errEl = document.getElementById('modal-msg');
+            const successEl = document.getElementById('modal-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            const role = document.getElementById('modal-role').value;
+            const is_active = document.getElementById('modal-status').value === 'true';
+
+            try {
+                await Promise.all([
+                    api.put('/admin/users/' + selectedUserId + '/role', { role }),
+                    api.put('/admin/users/' + selectedUserId + '/status', { is_active })
+                ]);
+                successEl.textContent = 'User updated!';
+                loadUsers();
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('user-modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+.login-box {
+    background-color: #083D77;
+    border-radius: 20%;
+    height: auto;
+    min-height: 50vh;
+    width: 50vh;
+    max-width: 90vw;
+    text-align: left;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 3vh 0;
+}
+
+.login-container{
+    display: flex;
+    justify-content: space-between;
+    padding-left: 2vh;
+    padding-right: 2vh;
+    align-items: center;
+}
+
+.login-label{
+    font-family: "Harabara",sans-serif;
+    font-size: 2vh;
+    color:#F4D35E;
+}
+
+.login-input{
+    width: 75%;
+    padding: 0.8vh 1vh;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.login-input:focus {
+    border-color: #FF72B1;
+}
+
+.login-input.error {
+    border-color: #ff4444;
+}
+
+.circles-bg {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+.login-title{
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 8vh;
+    color: #EE9648;
+    padding-left: 5vh;
+}
+
+.login-button{
+    display: flex;
+    justify-content: flex-end;
+    padding-right:2vh;
+}
+
+.submit-button{
+    width: 20vh;
+    height: 4vh;
+    color: #083D77;
+    font-family: "Harabara", sans-serif;
+    font-size: 3vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #FF72B1;
+    box-shadow: none;
+    filter: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+    background-color: #EE964B;
+}
+
+.submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.switch-login-register{
+    display: flex;
+    justify-content: center;
+}
+
+.error-message {
+    color: #ff4444;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    text-align: center;
+    padding: 0 2vh;
+    min-height: 2vh;
+}
+
+.success-message {
+    color: #4CAF50;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    text-align: center;
+    padding: 0 2vh;
+}
+
+@font-face {
+    font-family: 'Bauhaus 93 Regular';
+    src: url('../Fonts/Bauhaus 93 Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Harabara';
+    src: url('../Fonts/Harabara.ttf') format('truetype');
+}
