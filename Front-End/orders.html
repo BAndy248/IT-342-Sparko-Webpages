@@ -6,15 +6,19 @@
     <title>My Orders - Sparko</title>
     <link rel="stylesheet" href="css/sparkoTemplate.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
 </head>
 <body>
     <header class="dashboard-header">
         <div class="logo"><a href="index.html">Sparko</a></div>
         <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="orders.html" class="active">Orders</a>
             <a href="subscription.html">Subscription</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="cart.html">Cart <span id="cart-badge" class="cart-badge" style="display:none;">0</span></a>
             <a href="profile.html">Profile</a>
             <button class="logout-btn" onclick="api.logout()">Logout</button>
         </nav>
@@ -55,6 +59,7 @@
     <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
 
     <script src="js/api.js"></script>
+    <script src="js/cart-badge.js"></script>
     <script>
         if (!requireAuth()) throw new Error('redirect');
 

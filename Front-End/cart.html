@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+    <!-- Square Web Payments SDK (sandbox). Swap host for production. -->
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="cart.html" class="active">Cart <span id="cart-badge" class="cart-badge" style="display:none;">0</span></a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Shopping Cart</h1>
+
+        <div id="cart-empty" class="empty-state" style="display:none;">
+            <h3>Your cart is empty</h3>
+            <p>Browse the catalog to add some Sparko water to your cart.</p>
+            <a href="products.html" class="btn btn-primary">Shop products</a>
+        </div>
+
+        <div id="cart-loaded" class="cart-grid" style="display:none;">
+            <div>
+                <div id="cart-items"></div>
+                <button class="btn btn-danger btn-small" id="clear-cart-btn">Clear cart</button>
+            </div>
+
+            <aside class="cart-summary">
+                <h3>Summary</h3>
+                <div id="bundle-banner"></div>
+
+                <div class="summary-row"><span>Subtotal</span><span id="sum-subtotal">$0.00</span></div>
+                <div class="summary-row" id="sum-discount-row" style="display:none;">
+                    <span>Bundle discount</span><span id="sum-discount">−$0.00</span>
+                </div>
+
+                <div class="redeem-row">
+                    <div class="summary-row" style="margin:0;">
+                        <span>Reward points</span>
+                        <span id="points-available">0 pts</span>
+                    </div>
+                    <input type="number" id="redeem-points" min="0" value="0" placeholder="Redeem points">
+                    <div class="summary-row" id="sum-redeem-row" style="display:none;">
+                        <span>Points discount</span><span id="sum-redeem">−$0.00</span>
+                    </div>
+                </div>
+
+                <div class="summary-row total"><span>Total</span><span id="sum-total">$0.00</span></div>
+                <div class="summary-row"><span>You'll earn</span><span id="sum-points">+0 pts</span></div>
+
+                <hr style="border-color: rgba(244, 211, 94, 0.2); margin: 1.5vh 0;">
+
+                <label style="font-family:'Harabara'; color:#F4D35E;">Delivery address</label>
+                <select id="address-select" style="width:100%; padding:1vh; border-radius:6px; margin-top:0.5vh; font-family:'Harabara';"></select>
+
+                <label style="font-family:'Harabara'; color:#F4D35E; margin-top:1.5vh; display:block;">Payment</label>
+                <div id="card-container"></div>
+                <div id="payment-status" style="font-family:'Harabara'; color:#F4D35E; font-size:1.6vh; margin-top:0.5vh; min-height: 2vh;"></div>
+
+                <button class="btn btn-primary" id="checkout-btn" style="width:100%; margin-top:1.5vh; padding:1.5vh;">
+                    Pay & place order
+                </button>
+            </aside>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/cart-badge.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>

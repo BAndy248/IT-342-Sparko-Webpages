@@ -1,0 +1,592 @@
+/* ------------------------------------------------------------------ */
+/* Shop / Products page                                                */
+/* ------------------------------------------------------------------ */
+
+.shop-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    margin-bottom: 2vh;
+}
+
+.shop-toolbar .search-bar {
+    display: flex;
+    gap: 1vw;
+    flex-wrap: wrap;
+}
+
+.shop-toolbar .search-bar input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 500px;
+    padding: 1vh;
+    border: 2px solid #083D77;
+    border-radius: 6px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+}
+
+.result-info {
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    font-size: 1.7vh;
+    margin-bottom: 1.5vh;
+    opacity: 0.8;
+}
+
+/* Product grid */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 2vh;
+}
+
+.product-card {
+    background-color: #083D77;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #F4D35E;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.product-card-img {
+    height: 160px;
+    background: linear-gradient(135deg, #FF72B1, #EE964B);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-card-placeholder {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 7vh;
+    color: #F4D35E;
+    text-shadow: 0.3vh 0.3vh 0 #083D77;
+}
+
+.product-card-body {
+    padding: 1.5vh 1.5vw;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6vh;
+    flex: 1;
+}
+
+.product-card-title {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 2.2vh;
+    color: #EE964B;
+}
+
+.product-card-meta {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.5vh;
+    color: #F4D35E;
+    opacity: 0.7;
+}
+
+.product-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.5vh;
+}
+
+.product-card-price {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 2.5vh;
+    color: #FF72B1;
+    margin-top: auto;
+}
+
+.product-card-actions {
+    display: flex;
+    gap: 0.6vw;
+    flex-wrap: wrap;
+    margin-top: 0.8vh;
+}
+
+/* Star ratings */
+.star-row {
+    display: inline-flex;
+    gap: 1px;
+}
+.star {
+    color: rgba(244, 211, 94, 0.3);
+    font-size: 1.9vh;
+}
+.star.filled {
+    color: #F4D35E;
+}
+.rating-text {
+    color: #F4D35E;
+    opacity: 0.8;
+}
+
+/* Star picker on review form */
+.star-picker .star.pick {
+    cursor: pointer;
+    color: rgba(8, 61, 119, 0.3);
+    font-size: 3vh;
+    margin-right: 2px;
+    transition: color 0.1s;
+}
+.star-picker .star.pick.filled {
+    color: #FF72B1;
+}
+
+/* Wide modal for product detail */
+.modal-wide {
+    max-width: 720px;
+    width: 90%;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1vh;
+    right: 1vw;
+    background: none;
+    border: none;
+    font-size: 4vh;
+    cursor: pointer;
+    color: #083D77;
+    line-height: 1;
+}
+
+.product-meta {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    color: #083D77;
+    opacity: 0.8;
+    margin-bottom: 0.5vh;
+}
+
+.product-detail-price {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 4vh;
+    color: #FF72B1;
+    margin-top: 1vh;
+}
+
+.product-description {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+    color: #083D77;
+    margin: 1.5vh 0;
+}
+
+.divider {
+    border: none;
+    border-top: 2px solid rgba(8, 61, 119, 0.2);
+    margin: 2vh 0;
+}
+
+.reviews-title {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    margin-bottom: 1vh;
+}
+
+/* Rating summary bars */
+.rating-summary {
+    margin-bottom: 2vh;
+}
+
+.rating-row {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    margin-bottom: 0.5vh;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    color: #083D77;
+}
+
+.rating-row-label {
+    width: 40px;
+}
+
+.rating-row-bar {
+    flex: 1;
+    height: 12px;
+    background: rgba(8, 61, 119, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.rating-row-fill {
+    height: 100%;
+    background: #FF72B1;
+    transition: width 0.3s;
+}
+
+.rating-row-count {
+    width: 30px;
+    text-align: right;
+}
+
+/* Review form */
+.review-form {
+    background: rgba(8, 61, 119, 0.06);
+    padding: 1.5vh 1.5vw;
+    border-radius: 8px;
+    margin-bottom: 2vh;
+}
+
+.review-form h4 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    margin-bottom: 1vh;
+}
+
+.review-form input[type="text"],
+.review-form textarea {
+    width: 100%;
+    padding: 1vh;
+    border: 2px solid #083D77;
+    border-radius: 6px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    margin-bottom: 1vh;
+    box-sizing: border-box;
+}
+
+.review-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.review-form-actions {
+    display: flex;
+    gap: 0.5vw;
+}
+
+.review-status {
+    margin-top: 1vh;
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    font-size: 1.6vh;
+}
+
+/* Review list */
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+}
+
+.review-item {
+    background: white;
+    border: 2px solid rgba(8, 61, 119, 0.15);
+    border-radius: 8px;
+    padding: 1.5vh 1.5vw;
+}
+
+.review-head {
+    display: flex;
+    align-items: center;
+    gap: 1vw;
+    flex-wrap: wrap;
+    margin-bottom: 0.5vh;
+}
+
+.review-head .star {
+    color: rgba(8, 61, 119, 0.2);
+}
+
+.review-head .star.filled {
+    color: #FF72B1;
+}
+
+.review-author {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+}
+
+.review-date {
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    opacity: 0.6;
+    font-size: 1.5vh;
+}
+
+.review-title-line {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    margin: 0.4vh 0;
+}
+
+.review-comment {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    color: #083D77;
+    white-space: pre-wrap;
+}
+
+.empty-reviews {
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    opacity: 0.7;
+    text-align: center;
+    padding: 2vh 0;
+}
+
+/* Cart badge in nav */
+.cart-badge {
+    background-color: #FF72B1;
+    color: #083D77;
+    border-radius: 999px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.4vh;
+    padding: 0.2vh 0.7vw;
+    margin-left: 0.3vw;
+    font-weight: bold;
+}
+
+/* ------------------------------------------------------------------ */
+/* Cart page                                                           */
+/* ------------------------------------------------------------------ */
+
+.cart-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 3vh;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .cart-grid { grid-template-columns: 1fr; }
+}
+
+.cart-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto auto;
+    gap: 1.5vw;
+    align-items: center;
+    padding: 1.5vh 1vw;
+    background: #083D77;
+    border-radius: 10px;
+    margin-bottom: 1.5vh;
+    color: #F4D35E;
+}
+
+.cart-item-img {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #FF72B1, #EE964B);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 4vh;
+    color: #F4D35E;
+}
+
+.cart-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3vh;
+}
+
+.cart-item-name {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 2vh;
+    color: #EE964B;
+}
+
+.cart-item-meta {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.5vh;
+    color: #F4D35E;
+    opacity: 0.7;
+}
+
+.cart-item-price {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+}
+
+.cart-qty input {
+    width: 60px;
+    padding: 0.6vh;
+    border-radius: 6px;
+    border: none;
+    text-align: center;
+    font-family: "Harabara", sans-serif;
+}
+
+.cart-summary {
+    background: #083D77;
+    color: #F4D35E;
+    border-radius: 12px;
+    padding: 2vh 1.5vw;
+    position: sticky;
+    top: 2vh;
+}
+
+.cart-summary h3 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #EE964B;
+    margin-bottom: 1.5vh;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.8vh 0;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.8vh;
+}
+
+.summary-row.total {
+    font-size: 2.5vh;
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #FF72B1;
+    border-top: 2px solid rgba(244, 211, 94, 0.3);
+    padding-top: 1vh;
+    margin-top: 1vh;
+}
+
+.bundle-banner {
+    background: #FF72B1;
+    color: #083D77;
+    padding: 1vh 1vw;
+    border-radius: 8px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    margin: 1vh 0;
+}
+
+.redeem-row {
+    background: rgba(244, 211, 94, 0.1);
+    padding: 1vh 1vw;
+    border-radius: 8px;
+    margin: 1vh 0;
+}
+
+.redeem-row input {
+    width: 100%;
+    padding: 0.8vh;
+    border-radius: 6px;
+    border: none;
+    font-family: "Harabara", sans-serif;
+    margin-top: 0.5vh;
+    box-sizing: border-box;
+}
+
+/* Square payment frame */
+#card-container {
+    background: white;
+    border-radius: 6px;
+    padding: 1vh;
+    margin: 1vh 0;
+    min-height: 80px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Rewards page                                                        */
+/* ------------------------------------------------------------------ */
+
+.rewards-hero {
+    background: linear-gradient(135deg, #083D77, #FF72B1);
+    color: #F4D35E;
+    padding: 4vh 3vw;
+    border-radius: 16px;
+    margin-bottom: 3vh;
+    text-align: center;
+}
+
+.rewards-points {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 8vh;
+    color: #EE964B;
+    text-shadow: 0.3vh 0.3vh 0 #083D77;
+}
+
+.rewards-tier {
+    font-family: "Harabara", sans-serif;
+    font-size: 2.5vh;
+    text-transform: uppercase;
+    letter-spacing: 0.2vw;
+    margin-top: 1vh;
+}
+
+.tier-progress {
+    background: rgba(244, 211, 94, 0.2);
+    height: 14px;
+    border-radius: 7px;
+    margin: 2vh auto 0.5vh;
+    max-width: 500px;
+    overflow: hidden;
+}
+
+.tier-progress-fill {
+    height: 100%;
+    background: #F4D35E;
+    transition: width 0.5s;
+}
+
+.bundle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2vh;
+    margin: 2vh 0 4vh;
+}
+
+.bundle-card {
+    background: #083D77;
+    color: #F4D35E;
+    border-radius: 12px;
+    padding: 2vh 1.5vw;
+    border-top: 6px solid #FF72B1;
+}
+
+.bundle-discount {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 5vh;
+    color: #EE964B;
+}
+
+.bundle-name {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 2.3vh;
+    color: #FF72B1;
+    margin: 1vh 0 0.5vh;
+}
+
+.bundle-desc {
+    font-family: "Harabara", sans-serif;
+    font-size: 1.6vh;
+    opacity: 0.85;
+}
+
+.history-list {
+    background: #083D77;
+    color: #F4D35E;
+    border-radius: 12px;
+    padding: 1vh 1.5vw;
+}
+
+.history-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 1vh 0;
+    border-bottom: 1px solid rgba(244, 211, 94, 0.1);
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+}
+
+.history-row:last-child { border-bottom: none; }
+
+.history-points.earned   { color: #4CAF50; }
+.history-points.redeemed { color: #ff8a8a; }

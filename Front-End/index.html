@@ -30,10 +30,22 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Update nav if already logged in
+        // Update nav if already logged in.
+        // We offer two links for logged-in users — Shop (always relevant) and
+        // their role-appropriate dashboard.
         if (api.isLoggedIn()) {
             const navLink = document.getElementById('nav-link');
-            navLink.innerHTML = '<a href="' + (api.isAdmin() ? '/admin/dashboard.html' : '/dashboard.html') + '">Dashboard</a>';
+            const dashHref = api.isAdmin() ? '/admin/dashboard.html' : '/dashboard.html';
+            navLink.innerHTML =
+                '<a href="/products.html" style="margin-right:1vw;">Shop</a>' +
+                '<a href="' + dashHref + '">Dashboard</a>';
+        } else {
+            // For logged-out visitors, expose Shop alongside the Members link so
+            // they can preview products without signing in.
+            const navLink = document.getElementById('nav-link');
+            navLink.innerHTML =
+                '<a href="/products.html" style="margin-right:1vw;">Shop</a>' +
+                '<a href="login.html">Members</a>';
         }
     </script>
 </body>

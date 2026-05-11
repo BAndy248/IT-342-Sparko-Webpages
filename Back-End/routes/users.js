@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const passwordUtil = require('../utils/password');
+const { logger } = require('../utils/logger');
 
 // All user routes require authentication
 router.use(authenticate);
@@ -20,7 +21,7 @@ router.get('/profile', async (req, res) => {
         }
         res.json({ user: users[0] });
     } catch (err) {
-        console.error('Get profile error:', err.message);
+        logger.error('users_get_profile_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch profile.' });
     }
 });
@@ -63,7 +64,7 @@ router.put('/profile', [
 
         res.json({ message: 'Profile updated successfully.' });
     } catch (err) {
-        console.error('Update profile error:', err.message);
+        logger.error('users_update_profile_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update profile.' });
     }
 });
@@ -103,7 +104,7 @@ router.put('/change-password', [
 
         res.json({ message: 'Password changed successfully.' });
     } catch (err) {
-        console.error('Change password error:', err.message);
+        logger.error('users_change_password_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to change password.' });
     }
 });
@@ -119,7 +120,7 @@ router.get('/addresses', async (req, res) => {
         );
         res.json({ addresses });
     } catch (err) {
-        console.error('Get addresses error:', err.message);
+        logger.error('users_get_addresses_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch addresses.' });
     }
 });
@@ -155,7 +156,7 @@ router.post('/addresses', [
 
         res.status(201).json({ message: 'Address added.', id: result.insertId });
     } catch (err) {
-        console.error('Add address error:', err.message);
+        logger.error('users_add_address_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to add address.' });
     }
 });
@@ -172,7 +173,7 @@ router.delete('/addresses/:id', async (req, res) => {
         }
         res.json({ message: 'Address deleted.' });
     } catch (err) {
-        console.error('Delete address error:', err.message);
+        logger.error('users_delete_address_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to delete address.' });
     }
 });

@@ -8,6 +8,7 @@ const { jwtSecret, jwtExpiresIn, resetTokenExpiresHours } = require('../config/a
 const { authLimiter } = require('../middleware/rateLimiter');
 const { authenticate } = require('../middleware/auth');
 const passwordUtil = require('../utils/password');
+const { logger } = require('../utils/logger');
 
 // Apply stricter rate limiting to all auth routes
 router.use(authLimiter);
@@ -63,7 +64,7 @@ router.post('/register', [
             user: { id: result.insertId, username, email, role: 'user' }
         });
     } catch (err) {
-        console.error('Register error:', err.message);
+        logger.error('auth_register_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Registration failed.' });
     }
 });
@@ -118,7 +119,7 @@ router.post('/login', [
             }
         });
     } catch (err) {
-        console.error('Login error:', err.message);
+        logger.error('auth_login_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Login failed.' });
     }
 });
@@ -174,7 +175,7 @@ router.post('/forgot-password', [
 
         res.json({ message: 'If that email exists, a reset link has been sent.' });
     } catch (err) {
-        console.error('Forgot password error:', err.message);
+        logger.error('auth_forgot_password_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Password reset request failed.' });
     }
 });
@@ -233,7 +234,7 @@ router.post('/reset-password', [
 
         res.json({ message: 'Password has been reset successfully.' });
     } catch (err) {
-        console.error('Reset password error:', err.message);
+        logger.error('auth_reset_password_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Password reset failed.' });
     }
 });
@@ -250,7 +251,7 @@ router.get('/me', authenticate, async (req, res) => {
         }
         res.json({ user: users[0] });
     } catch (err) {
-        console.error('Get user error:', err.message);
+        logger.error('auth_get_user_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch user.' });
     }
 });
