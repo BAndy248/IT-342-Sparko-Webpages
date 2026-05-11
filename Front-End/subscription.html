@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html" class="active">Subscription</a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">My Subscriptions</h1>
+
+        <div id="subscriptions-container">
+            <div class="empty-state"><p>Loading...</p></div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh; margin-top: 4vh;">Start New Subscription</h2>
+
+        <div class="card" style="max-width: 600px;">
+            <div class="card-title">Create Subscription</div>
+            <div id="new-sub-error" class="error-message" style="color:#ff4444;"></div>
+            <div id="new-sub-success" class="success-message" style="color:#4CAF50;"></div>
+
+            <div class="form-group">
+                <label style="color:#F4D35E;">Plan Name</label>
+                <select id="plan-name" style="max-width:300px; padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif;">
+                    <option value="Basic">Basic - Personal Use</option>
+                    <option value="Family">Family - Household</option>
+                    <option value="Office">Office - Workplace</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color:#F4D35E;">Delivery Frequency</label>
+                <select id="frequency" style="max-width:300px; padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif;">
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-Weekly</option>
+                    <option value="monthly" selected>Monthly</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color:#F4D35E;">Delivery Address</label>
+                <select id="address-select" style="max-width:300px; padding:1vh; border-radius:6px; font-family:'Harabara',sans-serif;">
+                    <option value="">Loading addresses...</option>
+                </select>
+                <div style="margin-top:1vh;"><a href="profile.html" style="color:#FF72B1; font-family:'Harabara',sans-serif; font-size:1.6vh;">+ Add address in Profile</a></div>
+            </div>
+
+            <div class="form-group">
+                <label style="color:#F4D35E;">Products</label>
+                <div id="products-list" style="color:#F4D35E; font-family:'Harabara',sans-serif; font-size:1.7vh;">Loading products...</div>
+            </div>
+
+            <button class="btn btn-primary" onclick="createSubscription()">Create Subscription</button>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('redirect');
+
+        let allProducts = [];
+        loadPage();
+
+        async function loadPage() {
+            await Promise.all([loadSubscriptions(), loadAddresses(), loadProducts()]);
+        }
+
+        async function loadSubscriptions() {
+            try {
+                const data = await api.get('/subscriptions');
+                const container = document.getElementById('subscriptions-container');
+
+                if (data.subscriptions.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No subscriptions yet</h3><p>Create one below to get started!</p></div>';
+                    return;
+                }
+
+                let html = '';
+                for (const sub of data.subscriptions) {
+                    html += '<div class="card" style="margin-bottom:2vh;">';
+                    html += '<div class="card-title">' + escapeHtml(sub.plan_name) + ' Plan</div>';
+                    html += '<div style="color:#F4D35E; font-family:\'Harabara\',sans-serif; font-size:1.8vh; margin-bottom:1vh;">';
+                    html += statusBadge(sub.status) + ' &nbsp; ' + escapeHtml(sub.frequency) + ' delivery';
+                    html += '</div>';
+                    html += '<div class="card-label">Next Delivery: ' + escapeHtml(formatDate(sub.next_delivery)) + '</div>';
+
+                    if (sub.items && sub.items.length > 0) {
+                        html += '<div class="card-label" style="margin-top:1vh;">Items:</div>';
+                        html += '<ul style="color:#F4D35E; font-family:\'Harabara\',sans-serif; font-size:1.6vh; padding-left:2vh;">';
+                        for (const item of sub.items) {
+                            html += '<li>' + escapeHtml(item.name) + ' x' + escapeHtml(String(item.quantity)) + ' - ' + escapeHtml(formatCurrency(item.price)) + '</li>';
+                        }
+                        html += '</ul>';
+                    }
+
+                    if (sub.street) {
+                        html += '<div class="card-label" style="margin-top:1vh;">Delivers to: ' +
+                            escapeHtml(sub.street) + ', ' + escapeHtml(sub.city) + '</div>';
+                    }
+
+                    html += '<div style="margin-top:1.5vh; display:flex; gap:1vh; flex-wrap:wrap;">';
+                    if (sub.status === 'active') {
+                        html += '<button class="btn btn-small btn-secondary" onclick="updateStatus(' + sub.id + ',\'paused\')">Pause</button>';
+                        html += '<button class="btn btn-small btn-danger" onclick="updateStatus(' + sub.id + ',\'cancelled\')">Cancel</button>';
+                    } else if (sub.status === 'paused') {
+                        html += '<button class="btn btn-small btn-primary" onclick="updateStatus(' + sub.id + ',\'active\')">Resume</button>';
+                        html += '<button class="btn btn-small btn-danger" onclick="updateStatus(' + sub.id + ',\'cancelled\')">Cancel</button>';
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Load subscriptions error:', err);
+            }
+        }
+
+        async function loadAddresses() {
+            try {
+                const data = await api.get('/users/addresses');
+                const select = document.getElementById('address-select');
+                if (data.addresses.length === 0) {
+                    select.innerHTML = '<option value="">No addresses - add one in Profile</option>';
+                } else {
+                    select.innerHTML = data.addresses.map(a =>
+                        '<option value="' + a.id + '">' + escapeHtml(a.street) + ', ' + escapeHtml(a.city) + ', ' + escapeHtml(a.state) + '</option>'
+                    ).join('');
+                }
+            } catch (err) {
+                console.error('Load addresses error:', err);
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const data = await api.get('/products');
+                allProducts = data.products;
+                const container = document.getElementById('products-list');
+
+                if (allProducts.length === 0) {
+                    container.textContent = 'No products available.';
+                    return;
+                }
+
+                let html = '';
+                for (const p of allProducts) {
+                    html += '<div style="margin-bottom:0.8vh; display:flex; align-items:center; gap:1vh;">';
+                    html += '<input type="number" min="0" max="20" value="0" id="prod-' + p.id + '" style="width:50px; padding:0.5vh; border-radius:4px; border:none;">';
+                    html += ' ' + escapeHtml(p.name) + ' (' + escapeHtml(p.size) + ') - ' + escapeHtml(formatCurrency(p.price));
+                    html += '</div>';
+                }
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Load products error:', err);
+            }
+        }
+
+        async function createSubscription() {
+            const errEl = document.getElementById('new-sub-error');
+            const successEl = document.getElementById('new-sub-success');
+            errEl.textContent = '';
+            successEl.textContent = '';
+
+            const plan_name = document.getElementById('plan-name').value;
+            const frequency = document.getElementById('frequency').value;
+            const address_id = document.getElementById('address-select').value;
+
+            if (!address_id) {
+                errEl.textContent = 'Please add a delivery address in your Profile first.';
+                return;
+            }
+
+            const items = [];
+            for (const p of allProducts) {
+                const qty = parseInt(document.getElementById('prod-' + p.id).value) || 0;
+                if (qty > 0) {
+                    items.push({ product_id: p.id, quantity: qty });
+                }
+            }
+
+            if (items.length === 0) {
+                errEl.textContent = 'Please select at least one product.';
+                return;
+            }
+
+            try {
+                await api.post('/subscriptions', { plan_name, frequency, address_id: parseInt(address_id), items });
+                successEl.textContent = 'Subscription created!';
+                loadSubscriptions();
+            } catch (err) {
+                errEl.textContent = err.message;
+            }
+        }
+
+        async function updateStatus(id, status) {
+            if (status === 'cancelled' && !confirm('Are you sure you want to cancel this subscription?')) return;
+            try {
+                await api.put('/subscriptions/' + id + '/status', { status });
+                loadSubscriptions();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    </script>
+</body>
+</html>

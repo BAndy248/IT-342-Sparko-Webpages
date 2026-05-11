@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html" class="active">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">My Orders</h1>
+
+        <div class="filter-bar">
+            <select id="status-filter" onchange="loadOrders()">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+
+        <div id="orders-container">
+            <div class="empty-state"><p>Loading...</p></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal-overlay" id="order-modal">
+        <div class="modal">
+            <div class="modal-title">Order #<span id="modal-order-id"></span></div>
+            <div id="modal-content"></div>
+            <br>
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn btn-danger" id="cancel-btn" style="display:none;" onclick="cancelOrder()">Cancel Order</button>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('redirect');
+
+        let currentPage = 1;
+        let selectedOrderId = null;
+        loadOrders();
+
+        async function loadOrders(page = 1) {
+            currentPage = page;
+            const status = document.getElementById('status-filter').value;
+            const container = document.getElementById('orders-container');
+
+            try {
+                let url = '/orders?page=' + page + '&limit=10';
+                if (status) url += '&status=' + encodeURIComponent(status);
+
+                const data = await api.get(url);
+
+                if (data.orders.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No orders found</h3><p>Your order history will appear here.</p></div>';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>Order #</th><th>Date</th><th>Delivery</th><th>Status</th><th>Total</th><th>Action</th>';
+                html += '</tr></thead><tbody>';
+
+                for (const order of data.orders) {
+                    html += '<tr>';
+                    html += '<td>' + escapeHtml(String(order.id)) + '</td>';
+                    html += '<td>' + escapeHtml(formatDate(order.created_at)) + '</td>';
+                    html += '<td>' + escapeHtml(formatDate(order.delivery_date)) + '</td>';
+                    html += '<td>' + statusBadge(order.status) + '</td>';
+                    html += '<td>' + escapeHtml(formatCurrency(order.total)) + '</td>';
+                    html += '<td><button class="btn btn-small btn-primary" onclick="viewOrder(' + order.id + ')">View</button></td>';
+                    html += '</tr>';
+                }
+
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                // Pagination
+                const pag = data.pagination;
+                let pagHtml = '';
+                pagHtml += '<button ' + (pag.page <= 1 ? 'disabled' : '') + ' onclick="loadOrders(' + (pag.page - 1) + ')">Prev</button>';
+                for (let i = 1; i <= pag.pages; i++) {
+                    pagHtml += '<button class="' + (i === pag.page ? 'active' : '') + '" onclick="loadOrders(' + i + ')">' + i + '</button>';
+                }
+                pagHtml += '<button ' + (pag.page >= pag.pages ? 'disabled' : '') + ' onclick="loadOrders(' + (pag.page + 1) + ')">Next</button>';
+                document.getElementById('pagination').innerHTML = pagHtml;
+
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Error loading orders.</p></div>';
+            }
+        }
+
+        async function viewOrder(id) {
+            selectedOrderId = id;
+            try {
+                const data = await api.get('/orders/' + id);
+                const order = data.order;
+                setText('modal-order-id', String(id));
+
+                let html = '<div class="form-group"><label>Status</label><div>' + statusBadge(order.status) + '</div></div>';
+                html += '<div class="form-group"><label>Order Date</label><div>' + escapeHtml(formatDate(order.created_at)) + '</div></div>';
+                html += '<div class="form-group"><label>Delivery Date</label><div>' + escapeHtml(formatDate(order.delivery_date)) + '</div></div>';
+
+                if (order.street) {
+                    html += '<div class="form-group"><label>Delivery Address</label><div>' +
+                        escapeHtml(order.street) + ', ' + escapeHtml(order.city) + ', ' +
+                        escapeHtml(order.state) + ' ' + escapeHtml(order.zip_code) + '</div></div>';
+                }
+
+                html += '<div class="form-group"><label>Items</label></div>';
+                html += '<table class="data-table"><thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead><tbody>';
+                for (const item of data.items) {
+                    html += '<tr><td>' + escapeHtml(item.name) + ' (' + escapeHtml(item.size) + ')</td>';
+                    html += '<td>' + escapeHtml(String(item.quantity)) + '</td>';
+                    html += '<td>' + escapeHtml(formatCurrency(item.price)) + '</td></tr>';
+                }
+                html += '</tbody></table>';
+                html += '<div class="form-group"><label>Total: ' + escapeHtml(formatCurrency(order.total)) + '</label></div>';
+
+                document.getElementById('modal-content').innerHTML = html;
+
+                const cancelBtn = document.getElementById('cancel-btn');
+                cancelBtn.style.display = order.status === 'pending' ? 'inline-block' : 'none';
+
+                document.getElementById('order-modal').classList.add('active');
+            } catch (err) {
+                alert('Error loading order details.');
+            }
+        }
+
+        async function cancelOrder() {
+            if (!confirm('Are you sure you want to cancel this order?')) return;
+            try {
+                await api.put('/orders/' + selectedOrderId + '/cancel');
+                closeModal();
+                loadOrders(currentPage);
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('order-modal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>

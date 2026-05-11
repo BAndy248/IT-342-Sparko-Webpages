@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1080 1080" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1.589844,0,0,1.561658,-951.469602,-268.602713)">
+        <circle cx="947.354" cy="517.785" r="326.392" style="fill:rgb(8,61,119);"/>
+    </g>
+    <g transform="matrix(1.544879,0,0,1.51749,-952.900524,-260.149263)">
+        <circle cx="947.354" cy="517.785" r="326.392" style="fill:rgb(255,114,177);"/>
+    </g>
+    <g transform="matrix(1.331346,0,0,1.307742,-750.609097,-151.545315)">
+        <circle cx="947.354" cy="517.785" r="326.392" style="fill:rgb(244,211,94);"/>
+    </g>
+    <g transform="matrix(1.066302,-0.070264,0.071532,1.047397,-671.304287,90.665933)">
+        <text x="727.595px" y="445.401px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(255,114,177);">Shockingly</text>
+        <g transform="matrix(144.135201,0,0,144.135201,1242.660106,655.903111)">
+        </g>
+        <text x="909.91px" y="655.903px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(255,114,177);">Good</text>
+    </g>
+    <g transform="matrix(1.068313,-0.028203,0.028712,1.049373,-652.008303,44.467303)">
+        <text x="727.595px" y="445.401px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(238,105,75);">Shockingly</text>
+        <g transform="matrix(144.135201,0,0,144.135201,1242.660106,655.903111)">
+        </g>
+        <text x="909.91px" y="655.903px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(238,105,75);">Good</text>
+    </g>
+    <g transform="matrix(1.067569,0.048247,-0.049118,1.048642,-612.208138,-37.338348)">
+        <text x="727.595px" y="445.401px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(8,61,119);">Shockingly</text>
+        <g transform="matrix(144.135201,0,0,144.135201,1242.660106,655.903111)">
+        </g>
+        <text x="909.91px" y="655.903px" style="font-family:'Bauhaus93', 'Bauhaus 93', fantasy;font-size:144.135px;fill:rgb(8,61,119);">Good</text>
+    </g>
+</svg>
