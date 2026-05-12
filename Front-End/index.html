@@ -3,50 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sparko - Water Delivery Service</title>
+    <title>Sparko Water — Delivery Service</title>
+    <meta name="description" content="Sparko Water delivers spring, purified, alkaline, and sparkling water on a subscription you control. Earn points on every order.">
     <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="home-page-button">
-                <a href="index.html">Sparko</a>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav" id="main-nav">
+            <a href="products.html">Products</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="about.html">About</a>
+            <a href="faq.html">FAQ</a>
+            <span id="auth-nav">
+                <a href="login.html">Sign in</a>
+            </span>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>Sparko</h1>
+        <p>Spring, purified, alkaline, and sparkling water delivered on a subscription
+        you actually control. Earn rewards on every order.</p>
+        <div class="hero-cta">
+            <a href="products.html" class="btn btn-primary">Shop now</a>
+            <a href="subscription.html" class="btn btn-secondary">Start a subscription</a>
+        </div>
+    </section>
+
+    <!-- Why Sparko -->
+    <section class="features">
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">⟲</div>
+                <h3>Flexible delivery</h3>
+                <p>Weekly, bi-weekly, or monthly — change it whenever, pause when you're traveling.</p>
             </div>
-            <div class="membership-login" id="nav-link">
-                <a href="login.html">Members</a>
+            <div class="feature">
+                <div class="feature-icon">★</div>
+                <h3>Rewards on every order</h3>
+                <p>Earn 10 points per dollar. Cash them in for discounts at checkout.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">%</div>
+                <h3>Bundle savings</h3>
+                <p>Buy more, save more — bundle promos apply automatically. No codes.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⌬</div>
+                <h3>Secure checkout</h3>
+                <p>Payments are handled by Square. Your card details never touch our servers.</p>
             </div>
         </div>
-    </header>
-    <div class="main-div">
-        <img src="Images/SparkoLogo.svg" width="500" height="500" alt="Sparko Logo">
-        <span class="container">
-            <div class="circle"></div>
-            <div class="circle2"></div>
-            <div class="circle3"></div>
-        </span>
-    </div>
-    <footer></footer>
+    </section>
+
+    <!-- Featured products (loaded from /api/products) -->
+    <section class="featured-products">
+        <h2>Featured products</h2>
+        <div id="featured-grid" class="product-grid">
+            <div class="empty-state"><p>Loading our most-loved bottles…</p></div>
+        </div>
+        <div style="text-align:center; margin-top:3vh;">
+            <a href="products.html" class="btn btn-primary">See full catalog</a>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-banner">
+        <h2>Stay hydrated. Less hassle.</h2>
+        <p>Set up a subscription in under two minutes — your first delivery can be here next week.</p>
+        <a href="register.html" class="btn btn-primary">Create your account</a>
+    </section>
+
+    <div id="footer-mount"></div>
 
     <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
     <script>
-        // Update nav if already logged in.
-        // We offer two links for logged-in users — Shop (always relevant) and
-        // their role-appropriate dashboard.
-        if (api.isLoggedIn()) {
-            const navLink = document.getElementById('nav-link');
-            const dashHref = api.isAdmin() ? '/admin/dashboard.html' : '/dashboard.html';
-            navLink.innerHTML =
-                '<a href="/products.html" style="margin-right:1vw;">Shop</a>' +
-                '<a href="' + dashHref + '">Dashboard</a>';
-        } else {
-            // For logged-out visitors, expose Shop alongside the Members link so
-            // they can preview products without signing in.
-            const navLink = document.getElementById('nav-link');
-            navLink.innerHTML =
-                '<a href="/products.html" style="margin-right:1vw;">Shop</a>' +
-                '<a href="login.html">Members</a>';
-        }
+        // Swap the right side of the nav when the visitor is already signed in.
+        (function() {
+            const authNav = document.getElementById('auth-nav');
+            if (api.isLoggedIn()) {
+                const dashHref = api.isAdmin() ? '/admin/dashboard.html' : '/dashboard.html';
+                authNav.innerHTML =
+                    '<a href="cart.html">Cart</a>' +
+                    '<a href="' + dashHref + '">Dashboard</a>';
+            }
+        })();
+
+        // Featured products — pull the four highest-rated items from the public
+        // API. Fails silently if the API isn't reachable so the rest of the
+        // landing page still renders.
+        (async function loadFeatured() {
+            const grid = document.getElementById('featured-grid');
+            try {
+                const data = await api.get('/products?limit=4&sort=rating');
+                if (!data.products || !data.products.length) {
+                    grid.innerHTML = '<div class="empty-state"><p>Catalog coming soon.</p></div>';
+                    return;
+                }
+                const buildStars = (r) => {
+                    let s = '<span class="star-row">';
+                    for (let i = 1; i <= 5; i++) {
+                        s += '<span class="star ' + (i <= Math.round(r) ? 'filled' : '') + '">★</span>';
+                    }
+                    s += '</span>';
+                    return s;
+                };
+
+                let html = '';
+                for (const p of data.products) {
+                    const rating = Number(p.avg_rating).toFixed(1);
+                    const count  = Number(p.review_count);
+                    html += '<div class="product-card">';
+                    html += '  <div class="product-card-img"><div class="product-card-placeholder">'
+                          + escapeHtml((p.name || 'Sparko')[0]) + '</div></div>';
+                    html += '  <div class="product-card-body">';
+                    html += '    <div class="product-card-title">' + escapeHtml(p.name) + '</div>';
+                    html += '    <div class="product-card-meta">' + escapeHtml(p.category || '') + ' · '
+                          + escapeHtml(p.size || '') + '</div>';
+                    html += '    <div class="product-card-rating">' + buildStars(rating)
+                          + ' <span class="rating-text">' + rating + ' (' + count + ')</span></div>';
+                    html += '    <div class="product-card-price">' + formatCurrency(p.price) + '</div>';
+                    html += '    <div class="product-card-actions">';
+                    html += '      <a href="products.html" class="btn btn-small btn-primary">View</a>';
+                    html += '    </div>';
+                    html += '  </div>';
+                    html += '</div>';
+                }
+                grid.innerHTML = html;
+            } catch (err) {
+                grid.innerHTML = '<div class="empty-state"><p>Browse the <a href="products.html" style="color:#FF72B1;">full catalog</a> for what we carry.</p></div>';
+            }
+        })();
     </script>
 </body>
 </html>

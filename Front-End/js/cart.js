@@ -82,7 +82,7 @@ function renderItems() {
             try {
                 await api.put('/cart/items/' + inp.dataset.update, { quantity: qty });
                 loadCart();
-            } catch (e) { alert(e.message); }
+            } catch (e) { toast(e.message, { type: 'error' }); }
         });
     }
 
@@ -91,7 +91,7 @@ function renderItems() {
             try {
                 await api.delete('/cart/items/' + btn.dataset.remove);
                 loadCart();
-            } catch (e) { alert(e.message); }
+            } catch (e) { toast(e.message, { type: 'error' }); }
         });
     }
 }
@@ -226,9 +226,13 @@ async function checkout() {
             redeem_points: redeem
         });
         status.textContent = '';
-        alert('Order placed! Order #' + result.order_id
-            + (result.points_earned ? ' (+' + result.points_earned + ' points earned)' : ''));
-        window.location.href = '/orders.html';
+        toast(
+            'Order placed! Order #' + result.order_id
+            + (result.points_earned ? ' (+' + result.points_earned + ' points earned)' : ''),
+            { type: 'success', duration: 4000 }
+        );
+        // Give the toast a moment to register before navigating away.
+        setTimeout(() => { window.location.href = '/orders.html'; }, 800);
     } catch (e) {
         status.textContent = e.message || 'Checkout failed.';
         btn.disabled = false;

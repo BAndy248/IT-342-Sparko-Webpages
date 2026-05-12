@@ -185,6 +185,57 @@ router.delete('/:id', authenticate, async (req, res) => {
     }
 });
 
+// --- ADMIN: list every review across all products (for moderation) ---
+// Supports filtering by visibility (?hidden=true|false) and pagination so the
+// admin UI can show a flagged-content feed.
+router.get('/admin/all', authenticate, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Admin only.' });
+        }
+        const page   = Math.max(1, parseInt(req.query.page) || 1);
+        const limit  = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+        const offset = (page - 1) * limit;
+
+        let where = '';
+        const params = [];
+        if (req.query.hidden === 'true' || req.query.hidden === 'false') {
+            where = 'WHERE r.is_hidden = ?';
+            params.push(req.query.hidden === 'true');
+        }
+
+        const [rows] = await pool.execute(
+            `SELECT r.id, r.user_id, r.product_id, r.rating, r.title, r.comment,
+                    r.is_hidden, r.created_at,
+                    u.username, p.name AS product_name
+             FROM reviews r
+             JOIN users u    ON r.user_id    = u.id
+             JOIN products p ON r.product_id = p.id
+             ${where}
+             ORDER BY r.created_at DESC
+             LIMIT ? OFFSET ?`,
+            [...params, limit, offset]
+        );
+
+        const [[count]] = await pool.execute(
+            `SELECT COUNT(*) AS total FROM reviews r ${where}`,
+            params
+        );
+
+        res.json({
+            reviews: rows,
+            pagination: {
+                page, limit,
+                total: count.total,
+                pages: Math.ceil(count.total / limit)
+            }
+        });
+    } catch (err) {
+        logger.error('reviews_admin_list_failed', { requestId: req.requestId, error: err.message });
+        res.status(500).json({ error: 'Failed to load reviews.' });
+    }
+});
+
 // --- ADMIN: hide/unhide a review ---
 router.put('/:id/hide', authenticate, async (req, res) => {
     try {

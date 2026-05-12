@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="about.html" class="active">About</a>
+            <a href="contact.html">Contact</a>
+            <a href="login.html">Sign in</a>
+        </nav>
+    </header>
+
+    <div class="content-page">
+        <h1>About Sparko</h1>
+        <p>Sparko Water is a campus-scale subscription water delivery service built as
+        the capstone for IT-342 cloud development at Cebu Institute of Technology – University.
+        The platform demonstrates a full multi-tier AWS architecture: Auto Scaling Groups
+        behind an Application Load Balancer, RDS Multi-AZ for the database, Lambda for
+        scheduled subscription renewals, and CloudFront for static asset delivery.</p>
+
+        <h2>What we deliver</h2>
+        <ul>
+            <li>Natural spring, purified, alkaline, and sparkling water in multiple sizes</li>
+            <li>Weekly, bi-weekly, or monthly delivery subscriptions</li>
+            <li>One-off orders through the shopping cart</li>
+            <li>Bundle discounts and a rewards-points program</li>
+        </ul>
+
+        <h2>How it works</h2>
+        <ul>
+            <li>Browse the catalog and add items to your cart.</li>
+            <li>Eligible bundles ("Buy 6, save 10%") are applied automatically at checkout.</li>
+            <li>Every dollar spent earns 10 reward points. 100 points = $1 to redeem on a future order.</li>
+            <li>Active subscriptions auto-renew on schedule and charge your saved payment method.</li>
+        </ul>
+
+        <h2>The team</h2>
+        <p>Built by the Sparko engineering team — see the <a href="https://github.com/BAndy248/IT-342-Sparko-Webpages">project repo</a>
+        for source code, infrastructure as code (Terraform), and architecture diagrams.</p>
+    </div>
+
+    <div class="cta-banner">
+        <h2>Ready to stay hydrated?</h2>
+        <p>Set up a subscription in under two minutes — we handle the rest.</p>
+        <a href="register.html" class="btn btn-primary">Create your account</a>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+</body>
+</html>

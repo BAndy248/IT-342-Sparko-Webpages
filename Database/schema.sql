@@ -205,6 +205,26 @@ CREATE TABLE bundle_rewards (
 );
 
 -- =========================================================================
+-- Payment methods on file (Square Cards on File)
+-- =========================================================================
+-- Stores Square's card ID (NOT the card number) so subscription renewals
+-- can charge the saved card. Card data stays on Square's PCI-compliant servers.
+CREATE TABLE payment_methods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    provider VARCHAR(20) NOT NULL DEFAULT 'square',
+    provider_card_id VARCHAR(255) NOT NULL,
+    card_brand VARCHAR(50),
+    card_last4 VARCHAR(4),
+    exp_month INT,
+    exp_year INT,
+    is_default BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_provider_card (provider_card_id)
+);
+
+-- =========================================================================
 -- Payments (Square API integration)
 -- =========================================================================
 -- Records the linkage between an order and the Square payment ID.

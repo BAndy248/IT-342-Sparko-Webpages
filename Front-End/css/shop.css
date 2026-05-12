@@ -590,3 +590,356 @@
 
 .history-points.earned   { color: #4CAF50; }
 .history-points.redeemed { color: #ff8a8a; }
+
+/* ============================================================ */
+/*  Site footer (shared via js/footer.js)                        */
+/* ============================================================ */
+.site-footer {
+    background-color: #062a52;
+    color: #F4D35E;
+    padding: 4vh 4vw 2vh;
+    font-family: "Harabara", sans-serif;
+}
+
+.site-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 3vh 3vw;
+    margin-bottom: 2vh;
+}
+
+.site-footer h4 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #EE964B;
+    font-size: 2.2vh;
+    margin-bottom: 1vh;
+}
+
+.site-footer a {
+    color: #F4D35E;
+    text-decoration: none;
+    display: block;
+    padding: 0.4vh 0;
+    font-size: 1.7vh;
+    opacity: 0.85;
+}
+
+.site-footer a:hover { opacity: 1; color: #FF72B1; }
+
+.site-footer-bar {
+    border-top: 1px solid rgba(244, 211, 94, 0.15);
+    padding-top: 1.5vh;
+    text-align: center;
+    font-size: 1.5vh;
+    opacity: 0.7;
+}
+
+/* ============================================================ */
+/*  Toast notifications (shared via js/toast.js)                 */
+/* ============================================================ */
+#toast-container {
+    position: fixed;
+    bottom: 3vh;
+    right: 3vw;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    pointer-events: none;
+    max-width: 90vw;
+}
+
+.toast {
+    background: #083D77;
+    color: #F4D35E;
+    padding: 1.5vh 1.5vw;
+    border-radius: 10px;
+    font-family: "Harabara", sans-serif;
+    font-size: 1.7vh;
+    border-left: 5px solid #FF72B1;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+    animation: toast-in 0.2s ease-out;
+    max-width: 380px;
+}
+
+.toast.toast-success { border-left-color: #4CAF50; }
+.toast.toast-error   { border-left-color: #ff4444; }
+.toast.toast-warn    { border-left-color: #EE964B; }
+.toast.toast-fading  { animation: toast-out 0.3s ease-in forwards; }
+
+@keyframes toast-in {
+    from { transform: translateX(20px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes toast-out {
+    from { transform: translateX(0);     opacity: 1; }
+    to   { transform: translateX(20px); opacity: 0; }
+}
+
+/* ============================================================ */
+/*  Hamburger / responsive nav (mobile)                          */
+/* ============================================================ */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #F4D35E;
+    cursor: pointer;
+    padding: 1vh 1.5vw;
+}
+
+.nav-toggle-icon {
+    display: inline-block;
+    width: 28px;
+    height: 22px;
+    position: relative;
+}
+.nav-toggle-icon::before,
+.nav-toggle-icon::after,
+.nav-toggle-icon span {
+    content: "";
+    background: #F4D35E;
+    display: block;
+    height: 3px;
+    border-radius: 2px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    transition: transform 0.2s, top 0.2s, opacity 0.2s;
+}
+.nav-toggle-icon::before { top: 0; }
+.nav-toggle-icon span    { top: 9.5px; }
+.nav-toggle-icon::after  { top: 19px; }
+
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon::before {
+    transform: rotate(45deg); top: 9px;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon span {
+    opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-icon::after {
+    transform: rotate(-45deg); top: 9px;
+}
+
+@media (max-width: 800px) {
+    .dashboard-header {
+        flex-wrap: wrap;
+    }
+    .nav-toggle { display: inline-block; }
+    .dashboard-nav {
+        flex-basis: 100%;
+        order: 3;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5vh;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease-out;
+    }
+    .dashboard-nav.is-open {
+        max-height: 90vh;
+        padding-top: 1vh;
+    }
+    .dashboard-nav a, .dashboard-nav button {
+        padding: 1.5vh 2vw;
+        border-radius: 8px;
+        text-align: left;
+    }
+}
+
+/* ============================================================ */
+/*  Landing page (index.html) — featured content                 */
+/* ============================================================ */
+.hero {
+    background: linear-gradient(135deg, #083D77 0%, #FF72B1 100%);
+    color: #F4D35E;
+    padding: 8vh 4vw;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero h1 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 9vh;
+    color: #EE964B;
+    text-shadow: 0.4vh 0.4vh 0 #083D77;
+    margin-bottom: 1.5vh;
+}
+
+.hero p {
+    font-family: "Harabara", sans-serif;
+    font-size: 2.4vh;
+    max-width: 600px;
+    margin: 0 auto 3vh;
+    opacity: 0.95;
+}
+
+.hero-cta {
+    display: inline-flex;
+    gap: 1.5vw;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hero-cta .btn {
+    font-size: 2vh;
+    padding: 1.5vh 3vw;
+    border-radius: 999px;
+}
+
+.features {
+    background: #F4D35E;
+    padding: 5vh 4vw;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 3vh;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feature {
+    background: white;
+    border-radius: 14px;
+    padding: 3vh 2vw;
+    text-align: center;
+    border-top: 6px solid #FF72B1;
+}
+
+.feature-icon {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 7vh;
+    color: #EE964B;
+    line-height: 1;
+    margin-bottom: 1vh;
+}
+
+.feature h3 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    font-size: 2.5vh;
+    margin-bottom: 1vh;
+}
+
+.feature p {
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    opacity: 0.8;
+    font-size: 1.7vh;
+}
+
+.featured-products {
+    background: #F4D35E;
+    padding: 0 4vw 5vh;
+}
+
+.featured-products h2 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    text-align: center;
+    font-size: 4vh;
+    margin-bottom: 3vh;
+}
+
+/* Section CTA banner used on landing / about / contact */
+.cta-banner {
+    background: #083D77;
+    color: #F4D35E;
+    padding: 6vh 4vw;
+    text-align: center;
+}
+
+.cta-banner h2 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #EE964B;
+    font-size: 4.5vh;
+    margin-bottom: 1.5vh;
+}
+
+.cta-banner p {
+    font-family: "Harabara", sans-serif;
+    font-size: 2vh;
+    opacity: 0.9;
+    margin-bottom: 2.5vh;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Generic content page (About/Terms/Privacy/FAQ/Contact) */
+.content-page {
+    background: #F4D35E;
+    padding: 5vh 6vw;
+    min-height: 70vh;
+}
+
+.content-page h1 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    font-size: 5vh;
+    margin-bottom: 2vh;
+}
+
+.content-page h2 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #083D77;
+    font-size: 3vh;
+    margin: 3vh 0 1vh;
+}
+
+.content-page p, .content-page li {
+    font-family: "Harabara", sans-serif;
+    color: #083D77;
+    font-size: 1.9vh;
+    line-height: 1.6;
+    max-width: 800px;
+}
+
+.content-page ul {
+    padding-left: 3vw;
+    margin: 1vh 0 2vh;
+}
+
+.content-page a {
+    color: #FF72B1;
+    text-decoration: underline;
+}
+
+/* 404 page */
+.error-page {
+    background: linear-gradient(135deg, #083D77 0%, #062a52 100%);
+    color: #F4D35E;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 5vh 4vw;
+}
+
+.error-page .error-code {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    font-size: 20vh;
+    color: #FF72B1;
+    line-height: 1;
+    text-shadow: 0.5vh 0.5vh 0 #EE964B;
+}
+
+.error-page h1 {
+    font-family: "Bauhaus 93 Regular", sans-serif;
+    color: #EE964B;
+    font-size: 4vh;
+    margin: 1vh 0;
+}
+
+.error-page p {
+    font-family: "Harabara", sans-serif;
+    font-size: 2vh;
+    opacity: 0.85;
+    margin-bottom: 3vh;
+}

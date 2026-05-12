@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
+    <!-- Square Web Payments SDK (sandbox host). Swap for production. -->
+    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
 </head>
 <body>
     <header class="dashboard-header">
@@ -29,6 +31,26 @@
 
         <div id="subscriptions-container">
             <div class="empty-state"><p>Loading...</p></div>
+        </div>
+
+        <h2 class="page-title" style="font-size: 3vh; margin-top: 4vh;">Payment Method on File</h2>
+        <p style="font-family:'Harabara',sans-serif; color:#083D77; max-width:600px;">
+            Auto-renewals charge the default card you save here. Card data goes
+            directly to Square — we only store the last four digits.
+        </p>
+
+        <div id="cards-container" style="margin-bottom:2vh;">
+            <div class="empty-state"><p>Loading saved cards…</p></div>
+        </div>
+
+        <div class="card" style="max-width:600px;">
+            <div class="card-title">Add a card</div>
+            <div style="font-family:'Harabara',sans-serif; color:#F4D35E; font-size:1.6vh; margin-bottom:1vh;">
+                Cards are saved to Square's secure vault. We store only an opaque card id, never the number.
+            </div>
+            <div id="sub-card-container" style="background:white; border-radius:6px; padding:1vh; min-height:80px;"></div>
+            <div id="sub-card-status" style="font-family:'Harabara',sans-serif; color:#F4D35E; font-size:1.6vh; margin:0.5vh 0 1vh; min-height:2vh;"></div>
+            <button class="btn btn-primary" id="save-card-btn">Save card</button>
         </div>
 
         <h2 class="page-title" style="font-size: 3vh; margin-top: 4vh;">Start New Subscription</h2>
@@ -73,18 +95,137 @@
         </div>
     </div>
 
-    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+    <div id="footer-mount"></div>
 
     <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/cart-badge.js"></script>
     <script>
         if (!requireAuth()) throw new Error('redirect');
 
+        // Square Web Payments SDK — placeholder credentials work in stub mode.
+        const SQUARE_APP_ID   = window.SQUARE_APP_ID   || 'sandbox-sq0idb-DEMO-PLACEHOLDER';
+        const SQUARE_LOCATION = window.SQUARE_LOCATION || 'L-DEMO-PLACEHOLDER';
+        let squareCard = null;
+
         let allProducts = [];
         loadPage();
+        initSquareCard();
+        loadCards();
 
         async function loadPage() {
             await Promise.all([loadSubscriptions(), loadAddresses(), loadProducts()]);
+        }
+
+        async function initSquareCard() {
+            const status = document.getElementById('sub-card-status');
+            if (!window.Square) {
+                status.textContent = 'Card field unavailable (Square SDK did not load).';
+                return;
+            }
+            try {
+                const payments = window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION);
+                squareCard = await payments.card();
+                await squareCard.attach('#sub-card-container');
+            } catch (e) {
+                status.textContent = 'Card form unavailable — using stub mode for the demo.';
+            }
+        }
+
+        async function loadCards() {
+            const container = document.getElementById('cards-container');
+            try {
+                const data = await api.get('/payment-methods');
+                if (!data.payment_methods.length) {
+                    container.innerHTML = '<div class="empty-state"><p>No card saved yet — add one below to enable auto-renewals.</p></div>';
+                    return;
+                }
+                let html = '';
+                for (const c of data.payment_methods) {
+                    html += '<div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1vh; margin-bottom:1vh;">';
+                    html += '  <div>';
+                    html += '    <div class="card-title">' + escapeHtml(c.card_brand || 'Card');
+                    if (c.is_default) html += ' <span class="badge badge-active">default</span>';
+                    html += '    </div>';
+                    html += '    <div style="font-family:\'Harabara\',sans-serif; color:#F4D35E; font-size:1.8vh;">';
+                    html += '      •••• ' + escapeHtml(c.card_last4 || '') + ' &nbsp; exp ' + escapeHtml(String(c.exp_month || '?')) + '/' + escapeHtml(String(c.exp_year || '?'));
+                    html += '    </div>';
+                    html += '  </div>';
+                    html += '  <div style="display:flex; gap:0.5vw;">';
+                    if (!c.is_default) {
+                        html += '<button class="btn btn-small btn-secondary" data-default="' + c.id + '">Make default</button>';
+                    }
+                    html += '<button class="btn btn-small btn-danger" data-delete="' + c.id + '">Remove</button>';
+                    html += '  </div>';
+                    html += '</div>';
+                }
+                container.innerHTML = html;
+
+                for (const btn of container.querySelectorAll('[data-default]')) {
+                    btn.addEventListener('click', () => makeDefault(btn.dataset.default));
+                }
+                for (const btn of container.querySelectorAll('[data-delete]')) {
+                    btn.addEventListener('click', () => deleteCard(btn.dataset.delete));
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state"><p>Could not load saved cards.</p></div>';
+            }
+        }
+
+        document.getElementById('save-card-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('save-card-btn');
+            const status = document.getElementById('sub-card-status');
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+
+            let sourceId = 'stub-source-' + Date.now();
+            if (squareCard) {
+                try {
+                    const result = await squareCard.tokenize();
+                    if (result.status === 'OK') sourceId = result.token;
+                    else {
+                        const msg = result.errors && result.errors[0] ? result.errors[0].message : 'Card error';
+                        status.textContent = msg;
+                        btn.disabled = false;
+                        btn.textContent = 'Save card';
+                        return;
+                    }
+                } catch (e) {
+                    status.textContent = 'Card tokenization failed.';
+                    btn.disabled = false;
+                    btn.textContent = 'Save card';
+                    return;
+                }
+            }
+            try {
+                await api.post('/payment-methods', { source_id: sourceId });
+                toast('Card saved.', { type: 'success' });
+                status.textContent = '';
+                loadCards();
+            } catch (e) {
+                toast(e.message || 'Failed to save card.', { type: 'error' });
+            }
+            btn.disabled = false;
+            btn.textContent = 'Save card';
+        });
+
+        async function makeDefault(id) {
+            try {
+                await api.put('/payment-methods/' + id + '/default');
+                toast('Default payment method updated.', { type: 'success' });
+                loadCards();
+            } catch (e) { toast(e.message, { type: 'error' }); }
+        }
+
+        async function deleteCard(id) {
+            if (!confirm('Remove this card? Auto-renewals will pause until you add another.')) return;
+            try {
+                await api.delete('/payment-methods/' + id);
+                toast('Card removed.', { type: 'success' });
+                loadCards();
+            } catch (e) { toast(e.message, { type: 'error' }); }
         }
 
         async function loadSubscriptions() {
@@ -221,7 +362,7 @@
                 await api.put('/subscriptions/' + id + '/status', { status });
                 loadSubscriptions();
             } catch (err) {
-                alert(err.message);
+                toast(err.message, { type: 'error' });
             }
         }
     </script>

@@ -90,10 +90,17 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/checkout', require('./routes/checkout'));
+app.use('/api/payment-methods', require('./routes/payment-methods'));
 
-// --- SPA fallback: serve index.html for non-API routes ---
+// --- 404 fallback ---
+// Unknown /api/* paths return a JSON 404 instead of dumping the HTML page.
+// Unknown non-API paths get the friendly Front-End/404.html.
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: 'Not found.', path: req.originalUrl });
+});
+
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Front-End', 'index.html'));
+    res.status(404).sendFile(path.join(__dirname, '..', 'Front-End', '404.html'));
 });
 
 // --- Global error handler ---

@@ -139,7 +139,7 @@ async function addToCart(productId, btn) {
         setTimeout(() => { if (btn) { btn.textContent = oldLabel; btn.disabled = false; } }, 1200);
     } catch (err) {
         if (btn) { btn.textContent = oldLabel; btn.disabled = false; }
-        alert(err.message || 'Failed to add to cart.');
+        toast(err.message || 'Failed to add to cart.', { type: 'error' });
     }
 }
 
@@ -256,8 +256,8 @@ function renderProductModal(product, reviewData) {
         try {
             await api.post('/cart/items', { product_id: product.id, quantity: qty });
             if (typeof refreshCartBadge === 'function') refreshCartBadge();
-            alert('Added to cart!');
-        } catch (e) { alert(e.message || 'Failed to add.'); }
+            toast('Added to cart!', { type: 'success' });
+        } catch (e) { toast(e.message || 'Failed to add.', { type: 'error' }); }
     });
 
     // Star picker
@@ -298,7 +298,7 @@ function renderProductModal(product, reviewData) {
             try {
                 await api.delete('/reviews/' + mine.id);
                 openProduct(product.id);
-            } catch (e) { alert(e.message); }
+            } catch (e) { toast(e.message, { type: 'error' }); }
         });
     }
 
@@ -308,7 +308,7 @@ function renderProductModal(product, reviewData) {
             try {
                 await api.delete('/reviews/' + btn.dataset.adminDel);
                 openProduct(product.id);
-            } catch (e) { alert(e.message); }
+            } catch (e) { toast(e.message, { type: 'error' }); }
         });
     }
 }

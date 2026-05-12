@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bundle Rewards - Sparko Admin</title>
+    <link rel="stylesheet" href="../css/sparkoTemplate.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/shop.css">
+    <link rel="icon" href="../Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo">
+            <a href="../index.html">Sparko</a>
+            <span style="font-family:'Harabara',sans-serif; font-size:2vh; color:#FF72B1;">ADMIN</span>
+        </div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="users.html">Users</a>
+            <a href="orders.html">Orders</a>
+            <a href="products.html">Products</a>
+            <a href="bundles.html" class="active">Bundles</a>
+            <a href="reviews.html">Reviews</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1vh;">
+            <h1 class="page-title" style="margin-bottom:0;">Bundle Rewards</h1>
+            <button class="btn btn-primary" id="new-bundle-btn">+ New Bundle</button>
+        </div>
+
+        <p style="font-family:'Harabara',sans-serif; color:#083D77; max-width:700px;">
+            Bundle promotions automatically apply at checkout when the cart meets the
+            minimum-items threshold (best-discount wins, never stacked). Set
+            <code>category</code> to limit a promo to a single product line.
+        </p>
+
+        <div id="bundles-container">
+            <div class="empty-state"><p>Loading…</p></div>
+        </div>
+    </div>
+
+    <!-- Create / edit modal -->
+    <div class="modal-overlay" id="bundle-modal">
+        <div class="modal">
+            <div class="modal-title" id="modal-title">New Bundle</div>
+            <div id="modal-error" style="color:#ff4444; font-family:'Harabara',sans-serif; margin-bottom:1vh;"></div>
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="bundle-name" maxlength="150">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="bundle-description" maxlength="500"
+                    style="width:100%; max-width:400px; min-height:60px; padding:1vh;
+                           border:2px solid #083D77; border-radius:6px;
+                           font-family:'Harabara',sans-serif; font-size:1.7vh;"></textarea>
+            </div>
+            <div style="display:flex; gap:1vw; flex-wrap:wrap;">
+                <div class="form-group">
+                    <label>Minimum items</label>
+                    <input type="number" id="bundle-min-items" min="1" max="100" value="3" style="width:140px;">
+                </div>
+                <div class="form-group">
+                    <label>Discount %</label>
+                    <input type="number" id="bundle-discount" min="0" max="100" step="0.5" value="10" style="width:140px;">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Category (optional — limits to one line)</label>
+                <input type="text" id="bundle-category" maxlength="50" placeholder="e.g. Sparkling">
+            </div>
+            <div style="display:flex; gap:1vw; flex-wrap:wrap;">
+                <div class="form-group">
+                    <label>Starts at (optional)</label>
+                    <input type="datetime-local" id="bundle-starts">
+                </div>
+                <div class="form-group">
+                    <label>Ends at (optional)</label>
+                    <input type="datetime-local" id="bundle-ends">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="bundle-active" checked>
+                    Active
+                </label>
+            </div>
+
+            <div style="display:flex; gap:1vw; justify-content:flex-end; flex-wrap:wrap;">
+                <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="modal-save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service · admin</footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        if (!requireAdmin()) throw new Error('redirect');
+
+        let editingId = null;
+
+        const modal       = document.getElementById('bundle-modal');
+        const modalTitle  = document.getElementById('modal-title');
+        const modalError  = document.getElementById('modal-error');
+        const inpName     = document.getElementById('bundle-name');
+        const inpDesc     = document.getElementById('bundle-description');
+        const inpMin      = document.getElementById('bundle-min-items');
+        const inpDiscount = document.getElementById('bundle-discount');
+        const inpCat      = document.getElementById('bundle-category');
+        const inpStarts   = document.getElementById('bundle-starts');
+        const inpEnds     = document.getElementById('bundle-ends');
+        const inpActive   = document.getElementById('bundle-active');
+
+        document.getElementById('new-bundle-btn').addEventListener('click', () => openModal());
+        document.getElementById('modal-cancel').addEventListener('click', closeModal);
+        document.getElementById('modal-save').addEventListener('click', save);
+
+        loadBundles();
+
+        async function loadBundles() {
+            const container = document.getElementById('bundles-container');
+            try {
+                const data = await api.get('/rewards/admin/bundles');
+                if (!data.bundles.length) {
+                    container.innerHTML = '<div class="empty-state"><h3>No bundles yet</h3><p>Click "New Bundle" to create your first promo.</p></div>';
+                    return;
+                }
+                let html = '<table class="data-table"><thead><tr>';
+                html += '<th>Name</th><th>Threshold</th><th>Discount</th><th>Category</th><th>Window</th><th>Status</th><th>Actions</th>';
+                html += '</tr></thead><tbody>';
+                for (const b of data.bundles) {
+                    html += '<tr>';
+                    html += '<td>' + escapeHtml(b.name) + '</td>';
+                    html += '<td>' + b.min_items + ' items</td>';
+                    html += '<td>' + Number(b.discount_percent).toFixed(1) + '%</td>';
+                    html += '<td>' + escapeHtml(b.category || '—') + '</td>';
+                    html += '<td>' + escapeHtml(b.starts_at ? formatDate(b.starts_at) : 'any')
+                          + ' → ' + escapeHtml(b.ends_at ? formatDate(b.ends_at) : 'any') + '</td>';
+                    html += '<td>' + (b.is_active
+                        ? '<span class="badge badge-active">active</span>'
+                        : '<span class="badge badge-cancelled">inactive</span>') + '</td>';
+                    html += '<td>';
+                    html += '  <button class="btn btn-small btn-secondary" data-edit="' + b.id + '">Edit</button> ';
+                    html += '  <button class="btn btn-small btn-danger" data-del="' + b.id + '">Delete</button>';
+                    html += '</td>';
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                for (const btn of container.querySelectorAll('[data-edit]')) {
+                    btn.addEventListener('click', () => {
+                        const b = data.bundles.find(x => x.id === parseInt(btn.dataset.edit, 10));
+                        openModal(b);
+                    });
+                }
+                for (const btn of container.querySelectorAll('[data-del]')) {
+                    btn.addEventListener('click', () => del(parseInt(btn.dataset.del, 10)));
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Could not load bundles.</p></div>';
+                toast(err.message || 'Failed to load bundles.', { type: 'error' });
+            }
+        }
+
+        function openModal(bundle) {
+            modalError.textContent = '';
+            if (bundle) {
+                editingId = bundle.id;
+                modalTitle.textContent = 'Edit Bundle';
+                inpName.value     = bundle.name;
+                inpDesc.value     = bundle.description || '';
+                inpMin.value      = bundle.min_items;
+                inpDiscount.value = bundle.discount_percent;
+                inpCat.value      = bundle.category || '';
+                // datetime-local needs the seconds chopped.
+                inpStarts.value   = bundle.starts_at ? bundle.starts_at.slice(0, 16) : '';
+                inpEnds.value     = bundle.ends_at   ? bundle.ends_at.slice(0, 16)   : '';
+                inpActive.checked = !!bundle.is_active;
+            } else {
+                editingId = null;
+                modalTitle.textContent = 'New Bundle';
+                inpName.value = ''; inpDesc.value = '';
+                inpMin.value = 3; inpDiscount.value = 10;
+                inpCat.value = ''; inpStarts.value = ''; inpEnds.value = '';
+                inpActive.checked = true;
+            }
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            editingId = null;
+        }
+
+        async function save() {
+            modalError.textContent = '';
+            const payload = {
+                name:             inpName.value.trim(),
+                description:      inpDesc.value.trim() || null,
+                min_items:        parseInt(inpMin.value, 10),
+                discount_percent: parseFloat(inpDiscount.value),
+                category:         inpCat.value.trim() || null,
+                starts_at:        inpStarts.value || null,
+                ends_at:          inpEnds.value || null,
+                is_active:        inpActive.checked
+            };
+            if (!payload.name)                       { modalError.textContent = 'Name is required.'; return; }
+            if (!(payload.min_items > 0))            { modalError.textContent = 'Minimum items must be > 0.'; return; }
+            if (!(payload.discount_percent >= 0 && payload.discount_percent <= 100)) {
+                modalError.textContent = 'Discount must be 0–100%.'; return;
+            }
+            try {
+                if (editingId) {
+                    await api.put('/rewards/admin/bundles/' + editingId, payload);
+                    toast('Bundle updated.', { type: 'success' });
+                } else {
+                    await api.post('/rewards/admin/bundles', payload);
+                    toast('Bundle created.', { type: 'success' });
+                }
+                closeModal();
+                loadBundles();
+            } catch (err) {
+                modalError.textContent = err.message || 'Save failed.';
+            }
+        }
+
+        async function del(id) {
+            if (!confirm('Delete this bundle? Customers will no longer see it.')) return;
+            try {
+                await api.delete('/rewards/admin/bundles/' + id);
+                toast('Bundle deleted.', { type: 'success' });
+                loadBundles();
+            } catch (err) {
+                toast(err.message || 'Delete failed.', { type: 'error' });
+            }
+        }
+    </script>
+</body>
+</html>

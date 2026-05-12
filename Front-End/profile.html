@@ -109,9 +109,12 @@
         </div>
     </div>
 
-    <footer class="dashboard-footer">Sparko Water Delivery Service</footer>
+    <div id="footer-mount"></div>
 
     <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/cart-badge.js"></script>
     <script>
         if (!requireAuth()) throw new Error('redirect');
@@ -244,7 +247,7 @@
                 await api.delete('/users/addresses/' + id);
                 loadAddresses();
             } catch (err) {
-                alert(err.message);
+                toast(err.message, { type: 'error' });
             }
         }
     </script>
