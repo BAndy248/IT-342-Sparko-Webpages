@@ -53,35 +53,41 @@ resource "aws_lb_target_group" "web" {
   tags                 = { Name = "${local.name_prefix}-web" }
 }
 
-# Plain HTTP listener — redirects to HTTPS when a domain is configured;
-# otherwise serves traffic directly (class-demo mode without a real domain).
-resource "aws_lb_listener" "public_http" {
+# Plain HTTP listener.
+#
+# Two distinct shapes — split into separate resources guarded by count so the
+# default_action doesn't have to juggle null-vs-set arguments across the two
+# modes (mixed types confuse the AWS provider and cause perpetual diffs).
+#
+#   - No domain configured -> forward traffic directly to the web tier.
+#   - Domain configured     -> 301 redirect to the HTTPS listener.
+resource "aws_lb_listener" "public_http_forward" {
+  count             = var.domain_name == "" ? 1 : 0
   load_balancer_arn = aws_lb.public.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type = var.domain_name == "" ? "forward" : "redirect"
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web.arn
+  }
+}
 
-    dynamic "forward" {
-      for_each = var.domain_name == "" ? [1] : []
-      content {
-        target_group {
-          arn = aws_lb_target_group.web.arn
-        }
-      }
-    }
+resource "aws_lb_listener" "public_http_redirect" {
+  count             = var.domain_name == "" ? 0 : 1
+  load_balancer_arn = aws_lb.public.arn
+  port              = 80
+  protocol          = "HTTP"
 
-    dynamic "redirect" {
-      for_each = var.domain_name == "" ? [] : [1]
-      content {
-        status_code = "HTTP_301"
-        port        = "443"
-        protocol    = "HTTPS"
-        host        = "#{host}"
-        path        = "/#{path}"
-        query       = "#{query}"
-      }
+  default_action {
+    type = "redirect"
+    redirect {
+      status_code = "HTTP_301"
+      port        = "443"
+      protocol    = "HTTPS"
+      host        = "#{host}"
+      path        = "/#{path}"
+      query       = "#{query}"
     }
   }
 }
@@ -93,8 +99,8 @@ resource "aws_lb_listener" "public_https" {
   port              = 443
   protocol          = "HTTPS"
   # TLS 1.2+ only; AWS-managed policy keeps cipher list current.
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.public[0].certificate_arn
+  ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn = aws_acm_certificate_validation.public[0].certificate_arn
 
   default_action {
     type             = "forward"

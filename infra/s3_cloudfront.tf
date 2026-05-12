@@ -48,8 +48,8 @@ resource "aws_s3_bucket_versioning" "static_assets" {
 # Allow CloudFront (and only that distribution) to read objects from the bucket.
 data "aws_iam_policy_document" "static_assets" {
   statement {
-    sid     = "AllowCloudFrontRead"
-    actions = ["s3:GetObject"]
+    sid       = "AllowCloudFrontRead"
+    actions   = ["s3:GetObject"]
     resources = ["${aws_s3_bucket.static_assets.arn}/*"]
     principals {
       type        = "Service"
@@ -82,7 +82,7 @@ resource "aws_cloudfront_distribution" "static" {
   is_ipv6_enabled     = true
   comment             = "${local.name_prefix} static asset CDN"
   default_root_object = "index.html"
-  price_class         = "PriceClass_100"  # NA + EU edges only — cheapest tier.
+  price_class         = "PriceClass_100" # NA + EU edges only — cheapest tier.
 
   origin {
     domain_name              = aws_s3_bucket.static_assets.bucket_regional_domain_name
@@ -97,9 +97,9 @@ resource "aws_cloudfront_distribution" "static" {
     cached_methods         = ["GET", "HEAD"]
     compress               = true
 
-    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # Managed-CachingOptimized
-    origin_request_policy_id   = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"  # Managed-CORS-S3Origin
-    response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03"  # Managed-SecurityHeadersPolicy
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    origin_request_policy_id   = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # Managed-CORS-S3Origin
+    response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03" # Managed-SecurityHeadersPolicy
   }
 
   restrictions {
@@ -110,17 +110,26 @@ resource "aws_cloudfront_distribution" "static" {
 
   # Use the dedicated us-east-1 cert when a domain is set; otherwise fall back
   # to the default *.cloudfront.net cert and skip the alias.
-  dynamic "aliases" {
-    for_each = var.domain_name == "" ? [] : [1]
-    content {}
-  }
+  # aliases is a set argument (NOT a nested block), so an empty list disables it.
   aliases = var.domain_name == "" ? [] : ["cdn.${var.domain_name}"]
 
-  viewer_certificate {
-    cloudfront_default_certificate = var.domain_name == "" ? true : false
-    acm_certificate_arn            = var.domain_name == "" ? null : aws_acm_certificate.cloudfront[0].arn
-    ssl_support_method             = var.domain_name == "" ? null : "sni-only"
-    minimum_protocol_version       = var.domain_name == "" ? null : "TLSv1.2_2021"
+  # The CloudFront viewer_certificate block has mutually exclusive shapes
+  # depending on whether you bring your own ACM cert. Use a dynamic block per
+  # mode so we never set null fields next to a `default_certificate = true`.
+  dynamic "viewer_certificate" {
+    for_each = var.domain_name == "" ? [1] : []
+    content {
+      cloudfront_default_certificate = true
+    }
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.domain_name == "" ? [] : [1]
+    content {
+      acm_certificate_arn      = aws_acm_certificate.cloudfront[0].arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
+    }
   }
 
   tags = { Name = "${local.name_prefix}-cdn" }
@@ -159,8 +168,8 @@ data "aws_elb_service_account" "main" {}
 
 data "aws_iam_policy_document" "alb_logs" {
   statement {
-    sid     = "AllowELBAccountWrite"
-    actions = ["s3:PutObject"]
+    sid       = "AllowELBAccountWrite"
+    actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.alb_logs.arn}/*"]
     principals {
       type        = "AWS"
@@ -168,8 +177,8 @@ data "aws_iam_policy_document" "alb_logs" {
     }
   }
   statement {
-    sid     = "AllowLogDelivery"
-    actions = ["s3:PutObject"]
+    sid       = "AllowLogDelivery"
+    actions   = ["s3:PutObject"]
     resources = ["${aws_s3_bucket.alb_logs.arn}/*"]
     principals {
       type        = "Service"
@@ -182,8 +191,8 @@ data "aws_iam_policy_document" "alb_logs" {
     }
   }
   statement {
-    sid     = "AllowLogDeliveryAclCheck"
-    actions = ["s3:GetBucketAcl"]
+    sid       = "AllowLogDeliveryAclCheck"
+    actions   = ["s3:GetBucketAcl"]
     resources = [aws_s3_bucket.alb_logs.arn]
     principals {
       type        = "Service"

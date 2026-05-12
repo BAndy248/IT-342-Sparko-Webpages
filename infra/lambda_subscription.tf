@@ -19,16 +19,16 @@
 # ----- SQS queues ----------------------------------------------------------
 resource "aws_sqs_queue" "subscription_dlq" {
   name                       = "${local.name_prefix}-sub-dlq"
-  message_retention_seconds  = 14 * 24 * 60 * 60  # 14 days
+  message_retention_seconds  = 14 * 24 * 60 * 60 # 14 days
   visibility_timeout_seconds = 60
   tags                       = { Name = "${local.name_prefix}-sub-dlq" }
 }
 
 resource "aws_sqs_queue" "subscription_renewal" {
   name                       = "${local.name_prefix}-sub-renewal"
-  message_retention_seconds  = 4 * 24 * 60 * 60   # 4 days
-  visibility_timeout_seconds = 180                 # > Lambda timeout below
-  receive_wait_time_seconds  = 10                  # long-poll
+  message_retention_seconds  = 4 * 24 * 60 * 60 # 4 days
+  visibility_timeout_seconds = 180              # > Lambda timeout below
+  receive_wait_time_seconds  = 10               # long-poll
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.subscription_dlq.arn
@@ -39,12 +39,28 @@ resource "aws_sqs_queue" "subscription_renewal" {
 }
 
 # ----- Lambda function -----------------------------------------------------
+# `npm install` runs before zipping so node_modules is included in the bundle.
+# Triggered on any package.json change so we don't reinstall every apply.
+resource "null_resource" "lambda_npm_install" {
+  triggers = {
+    package_hash = filesha256("${path.module}/../lambda/subscription-renewal/package.json")
+    index_hash   = filesha256("${path.module}/../lambda/subscription-renewal/index.js")
+  }
+
+  provisioner "local-exec" {
+    working_dir = "${path.module}/../lambda/subscription-renewal"
+    interpreter = ["bash", "-c"]
+    command     = "npm install --omit=dev --no-audit --no-fund"
+  }
+}
+
 # We zip the lambda source from ../lambda/subscription-renewal so terraform
 # apply produces a deterministic artifact every time.
 data "archive_file" "subscription_renewal" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/subscription-renewal"
   output_path = "${path.module}/.terraform-build/subscription-renewal.zip"
+  depends_on  = [null_resource.lambda_npm_install]
 }
 
 resource "aws_lambda_function" "subscription_renewal" {
@@ -68,13 +84,13 @@ resource "aws_lambda_function" "subscription_renewal" {
 
   environment {
     variables = {
-      DB_SECRET_ARN   = aws_secretsmanager_secret.db.arn
-      APP_SECRET_ARN  = aws_secretsmanager_secret.app.arn
-      REGION          = var.region
-      QUEUE_URL       = aws_sqs_queue.subscription_renewal.url
-      DLQ_URL         = aws_sqs_queue.subscription_dlq.url
-      SES_FROM        = local.ses_from_address
-      ENABLE_EMAIL    = var.ses_from_address == "" ? "0" : "1"
+      DB_SECRET_ARN  = aws_secretsmanager_secret.db.arn
+      APP_SECRET_ARN = aws_secretsmanager_secret.app.arn
+      REGION         = var.region
+      QUEUE_URL      = aws_sqs_queue.subscription_renewal.url
+      DLQ_URL        = aws_sqs_queue.subscription_dlq.url
+      SES_FROM       = local.ses_from_address
+      ENABLE_EMAIL   = var.ses_from_address == "" ? "0" : "1"
     }
   }
 

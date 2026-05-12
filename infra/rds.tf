@@ -42,9 +42,9 @@ resource "aws_iam_role" "rds_monitoring" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Service = "monitoring.rds.amazonaws.com" }
-      Action = "sts:AssumeRole"
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -57,12 +57,12 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-mysql"
 
-  engine               = "mysql"
-  engine_version       = "8.0.39"
-  instance_class       = var.db_instance_class
-  allocated_storage    = var.db_allocated_storage
-  storage_type         = "gp3"
-  storage_encrypted    = true
+  engine            = "mysql"
+  engine_version    = "8.0.39"
+  instance_class    = var.db_instance_class
+  allocated_storage = var.db_allocated_storage
+  storage_type      = "gp3"
+  storage_encrypted = true
 
   db_name  = var.db_name
   username = var.db_username
@@ -89,8 +89,8 @@ resource "aws_db_instance" "main" {
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
-  deletion_protection = var.environment == "prod"
-  skip_final_snapshot = var.environment != "prod"
+  deletion_protection       = var.environment == "prod"
+  skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = var.environment == "prod" ? "${local.name_prefix}-mysql-final-${formatdate("YYYYMMDDhhmmss", timestamp())}" : null
 
   apply_immediately = false

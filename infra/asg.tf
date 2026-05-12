@@ -78,14 +78,14 @@ resource "aws_launch_template" "api" {
 }
 
 resource "aws_autoscaling_group" "api" {
-  name                = "${local.name_prefix}-api"
-  vpc_zone_identifier = [for s in aws_subnet.private_app : s.id]
-  target_group_arns   = [aws_lb_target_group.api.arn]
-  health_check_type   = "ELB"
+  name                      = "${local.name_prefix}-api"
+  vpc_zone_identifier       = [for s in aws_subnet.private_app : s.id]
+  target_group_arns         = [aws_lb_target_group.api.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 180
-  min_size            = var.api_min_size
-  max_size            = var.api_max_size
-  desired_capacity    = var.api_min_size
+  min_size                  = var.api_min_size
+  max_size                  = var.api_max_size
+  desired_capacity          = var.api_min_size
 
   launch_template {
     id      = aws_launch_template.api.id
@@ -174,14 +174,14 @@ resource "aws_launch_template" "web" {
 }
 
 resource "aws_autoscaling_group" "web" {
-  name                = "${local.name_prefix}-web"
-  vpc_zone_identifier = [for s in aws_subnet.private_app : s.id]
-  target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
+  name                      = "${local.name_prefix}-web"
+  vpc_zone_identifier       = [for s in aws_subnet.private_app : s.id]
+  target_group_arns         = [aws_lb_target_group.web.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 180
-  min_size            = var.web_min_size
-  max_size            = var.web_max_size
-  desired_capacity    = var.web_min_size
+  min_size                  = var.web_min_size
+  max_size                  = var.web_max_size
+  desired_capacity          = var.web_min_size
 
   launch_template {
     id      = aws_launch_template.web.id

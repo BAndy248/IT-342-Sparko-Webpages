@@ -12,7 +12,7 @@
 
 resource "random_password" "db_master" {
   length      = 32
-  special     = false  # avoids MySQL identifier-quoting headaches
+  special     = false # avoids MySQL identifier-quoting headaches
   min_lower   = 4
   min_upper   = 4
   min_numeric = 4
@@ -53,10 +53,10 @@ resource "aws_secretsmanager_secret" "app" {
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
-    JWT_SECRET            = random_password.jwt.result
-    SQUARE_ACCESS_TOKEN   = var.square_access_token
-    SQUARE_LOCATION_ID    = var.square_location_id
-    SQUARE_ENVIRONMENT    = var.square_environment
+    JWT_SECRET          = random_password.jwt.result
+    SQUARE_ACCESS_TOKEN = var.square_access_token
+    SQUARE_LOCATION_ID  = var.square_location_id
+    SQUARE_ENVIRONMENT  = var.square_environment
   })
 
   lifecycle {

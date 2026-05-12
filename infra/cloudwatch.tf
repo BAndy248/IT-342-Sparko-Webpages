@@ -104,7 +104,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
   alarm_name          = "${local.name_prefix}-rds-storage-low"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
-  threshold           = 2 * 1024 * 1024 * 1024  # 2 GiB
+  threshold           = 2 * 1024 * 1024 * 1024 # 2 GiB
   metric_name         = "FreeStorageSpace"
   namespace           = "AWS/RDS"
   period              = 60
@@ -137,8 +137,8 @@ resource "aws_cloudwatch_dashboard" "main" {
   dashboard_body = jsonencode({
     widgets = [
       {
-        type   = "metric"
-        x      = 0, y = 0, width = 12, height = 6
+        type = "metric"
+        x    = 0, y = 0, width = 12, height = 6
         properties = {
           title  = "ALB requests / 5XX"
           region = var.region
@@ -153,8 +153,8 @@ resource "aws_cloudwatch_dashboard" "main" {
         }
       },
       {
-        type   = "metric"
-        x      = 12, y = 0, width = 12, height = 6
+        type = "metric"
+        x    = 12, y = 0, width = 12, height = 6
         properties = {
           title  = "ALB target latency p50/p99"
           region = var.region
@@ -167,8 +167,8 @@ resource "aws_cloudwatch_dashboard" "main" {
         }
       },
       {
-        type   = "metric"
-        x      = 0, y = 6, width = 12, height = 6
+        type = "metric"
+        x    = 0, y = 6, width = 12, height = 6
         properties = {
           title  = "API healthy hosts"
           region = var.region
@@ -176,28 +176,28 @@ resource "aws_cloudwatch_dashboard" "main" {
           stat   = "Minimum"
           view   = "timeSeries"
           metrics = [
-            ["AWS/ApplicationELB", "HealthyHostCount",   "TargetGroup", aws_lb_target_group.api.arn_suffix, "LoadBalancer", aws_lb.internal.arn_suffix],
-            [".",                  "UnHealthyHostCount", ".",           ".",                                ".",            "."]
+            ["AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", aws_lb_target_group.api.arn_suffix, "LoadBalancer", aws_lb.internal.arn_suffix],
+            [".", "UnHealthyHostCount", ".", ".", ".", "."]
           ]
         }
       },
       {
-        type   = "metric"
-        x      = 12, y = 6, width = 12, height = 6
+        type = "metric"
+        x    = 12, y = 6, width = 12, height = 6
         properties = {
           title  = "RDS CPU / connections"
           region = var.region
           period = 60
           view   = "timeSeries"
           metrics = [
-            ["AWS/RDS", "CPUUtilization",     "DBInstanceIdentifier", aws_db_instance.main.id],
-            [".",       "DatabaseConnections", ".",                   "."]
+            ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", aws_db_instance.main.id],
+            [".", "DatabaseConnections", ".", "."]
           ]
         }
       },
       {
-        type   = "log"
-        x      = 0, y = 12, width = 24, height = 6
+        type = "log"
+        x    = 0, y = 12, width = 24, height = 6
         properties = {
           title  = "Recent API errors"
           region = var.region
@@ -218,6 +218,7 @@ resource "aws_wafv2_web_acl" "main" {
     allow {}
   }
 
+
   rule {
     name     = "AWS-CommonRuleSet"
     priority = 1
@@ -227,7 +228,9 @@ resource "aws_wafv2_web_acl" "main" {
         vendor_name = "AWS"
       }
     }
-    override_action { none {} }
+    override_action {
+      none {}
+    }
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "CommonRuleSet"
@@ -244,7 +247,9 @@ resource "aws_wafv2_web_acl" "main" {
         vendor_name = "AWS"
       }
     }
-    override_action { none {} }
+    override_action {
+      none {}
+    }
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "KnownBadInputs"
@@ -261,7 +266,9 @@ resource "aws_wafv2_web_acl" "main" {
         aggregate_key_type = "IP"
       }
     }
-    action { block {} }
+    action {
+      block {}
+    }
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "RateLimit2000PerMin"

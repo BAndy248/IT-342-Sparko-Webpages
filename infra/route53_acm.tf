@@ -27,8 +27,8 @@ resource "aws_acm_certificate" "cloudfront" {
   count    = var.domain_name == "" ? 0 : 1
   provider = aws.us_east_1
 
-  domain_name               = "cdn.${var.domain_name}"
-  validation_method         = "DNS"
+  domain_name       = "cdn.${var.domain_name}"
+  validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true

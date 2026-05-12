@@ -17,25 +17,25 @@ resource "aws_security_group" "alb_public" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "HTTP from anywhere"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "HTTP from anywhere"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
 
   ingress {
-    description = "HTTPS from anywhere"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "HTTPS from anywhere"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
 
   egress {
-    description = "ALB -> anywhere (it'll only actually reach the web SG)"
+    description = "ALB outbound to web tier"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -97,7 +97,7 @@ resource "aws_security_group" "alb_internal" {
   }
 
   egress {
-    description = "internal ALB -> anywhere"
+    description = "internal ALB outbound"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

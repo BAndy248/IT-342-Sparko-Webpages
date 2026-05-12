@@ -1,1 +1,28 @@
 .DS_Store
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Local env
+**/.env
+.env.local
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/tfplan
+infra/terraform.tfvars
+infra/.terraform-build/
+
+# Lambda build artifacts
+lambda/**/node_modules/
+lambda/*.zip
+lambda/**/*.zip
+
+# IDE
+.vscode/
+.idea/
