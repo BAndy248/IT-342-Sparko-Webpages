@@ -1,7 +1,6 @@
 # Architecture
 
-Sparko Water is a 3-tier subscription / e-commerce platform deployed on AWS,
-provisioned end-to-end by Terraform.
+Sparko Water is a 3-tier subscription / e-commerce platform built on AWS.
 
 ## High-level diagram
 
@@ -9,7 +8,7 @@ provisioned end-to-end by Terraform.
                                             ┌──────────────────────┐
                        ┌────────────────────┤   Route 53 + ACM     │
                        │                    └──────────────────────┘
-                       │ DNS+TLS
+                       │ DNS+TLS  (only when a custom domain is set)
                   ┌────▼──────┐
    Internet ─────►│  AWS WAF  │
                   └────┬──────┘
@@ -59,27 +58,25 @@ the SVG export is in the repo.)
 
 ## No-domain mode
 
-When `domain_name = ""` in `terraform.tfvars`, the stack runs in **HTTP-only
-mode** suitable for a class demo without a registered domain name:
+When the stack runs without a registered domain, it operates in **HTTP-only
+mode**:
 
 - The public ALB serves HTTP only on port 80; no Route 53, no ACM cert.
 - Users access the site via the raw `*.elb.amazonaws.com` URL.
-- HSTS is disabled in the API (see `ENABLE_HSTS` env var) so browsers don't
-  cache an HTTPS-only pin that would brick future HTTP requests.
+- HSTS is disabled in the API so browsers don't cache an HTTPS-only pin that
+  would brick future HTTP requests.
 - SES email is effectively disabled (no verified sender domain). The
   password-reset endpoint returns the reset URL directly in its response so
   operators can hand it to the user manually.
 - The Lambda subscription-renewal flow still runs but does not email customers.
 - CloudFront is provisioned but unused (no `cdn.<domain>` alias). It serves
   static assets via its default `*.cloudfront.net` URL; the frontend doesn't
-  link to it. Cost ≈ \$1/mo. Remove [`s3_cloudfront.tf`](../infra/s3_cloudfront.tf)
-  if you want to skip it.
+  link to it. Cost ≈ \$1/mo.
 - Square stays in **sandbox** mode regardless of credentials, because
   Square's production card-tokenization requires HTTPS on the caller's origin.
 
-To upgrade to HTTPS later: register a domain, set `domain_name` + `route53_zone_id`
-in `terraform.tfvars`, also set `ENABLE_HSTS=true` in the API instance env, and
-re-apply.
+To upgrade to HTTPS later: register a domain, set up Route 53 + ACM in the
+console, point the ALB at the cert, and configure the API with `ENABLE_HSTS=true`.
 
 ## Layers
 
@@ -87,7 +84,8 @@ re-apply.
 - **AWS WAF** (regional) attached to the public ALB with managed rule groups
   (`AWSManagedRulesCommonRuleSet`, `KnownBadInputs`) + a 2000 req/min/IP rate
   limit.
-- **ACM** issues a public-trusted TLS cert validated via DNS in Route 53.
+- **ACM** issues a public-trusted TLS cert validated via DNS in Route 53
+  (only when a domain is in use).
 - **Route 53** hosts the apex, `www`, and `cdn.` records (alias to the
   public ALB and CloudFront respectively).
 
@@ -109,9 +107,9 @@ re-apply.
 ### Data tier (RDS MySQL 8)
 - Multi-AZ deployment in private data subnets (no internet route).
 - Storage encrypted with the AWS-managed KMS key for RDS.
-- Daily automated backups + 7-day point-in-time recovery.
+- Daily automated backups + 7-day point-in-time recovery (when not on free tier).
 - Slow query + general logs exported to CloudWatch Logs.
-- Performance Insights enabled.
+- Performance Insights enabled on larger instance classes.
 
 ### Async / subscription renewal
 - **EventBridge** scheduled rule fires once an hour.
@@ -158,8 +156,9 @@ re-apply.
 
 ## Request flow (happy path)
 
-1. Browser resolves `sparkowater.example.com` → ALB DNS via Route 53.
-2. HTTPS terminates at the public ALB (cert from ACM).
+1. Browser resolves the ALB DNS via Route 53 (or the AWS-managed
+   `*.elb.amazonaws.com` name).
+2. HTTPS terminates at the public ALB (cert from ACM, when a domain is configured).
 3. WAF inspects the request, blocks if it matches a managed rule.
 4. ALB forwards to a healthy web (nginx) target.
 5. nginx serves static files from disk, or `proxy_pass`es `/api/*` to the

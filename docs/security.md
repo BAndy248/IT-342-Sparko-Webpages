@@ -65,9 +65,9 @@ The EC2 user-data fetches the secret at boot, populates env vars, then
 hands off to `setup/backend-setup.sh`. Lambda fetches at cold start and
 caches the connection pool.
 
-Terraform writes the secrets on the first apply but `lifecycle.ignore_changes
-= [secret_string]` so subsequent rotations in the Secrets Manager console
-don't get clobbered.
+The secrets are created once at stack setup and rotated independently in
+the Secrets Manager console afterward — applications pick up the new value
+on next cold start.
 
 ## IAM
 

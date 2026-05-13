@@ -4,7 +4,7 @@ All figures are **us-east-1**, on-demand pricing as of early 2026. Real bills
 will vary with traffic, NAT-GW byte counts, and CloudWatch ingest volume.
 Use the [AWS Pricing Calculator](https://calculator.aws/) for an exact quote.
 
-## Demo footprint (`terraform.tfvars` defaults)
+## Demo footprint (single-AZ, t3.micro everywhere)
 
 Designed to stay under ~$70/month so a class demo doesn't burn budget.
 
@@ -73,6 +73,6 @@ If you run the demo with `db_multi_az = false` and `web_instance_type =
 
 ## Tags drive cost-allocation reports
 
-Every resource in `infra/` is tagged with `Project`, `Environment`, `Owner`,
-and `ManagedBy = terraform`. Activate these as Cost Allocation Tags in
+Apply `Project`, `Environment`, and `Owner` tags to every resource at
+creation time. Activate them as Cost Allocation Tags in
 Billing → Cost allocation tags so reports group cleanly.

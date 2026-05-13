@@ -18,8 +18,8 @@ see → why → what to do".
 
 ```bash
 # 1. Quick health snapshot.
-curl -fsS "$(terraform -chdir=infra output -raw public_url)/readyz" || true
-curl -fsS "$(terraform -chdir=infra output -raw public_url)/healthz" || true
+curl -fsS ""$SPARKO_URL"/readyz" || true
+curl -fsS ""$SPARKO_URL"/healthz" || true
 
 # 2. Look at the most recent errors.
 aws logs tail /sparko/api --since 10m --filter-pattern 'level = "error"' --format short
@@ -39,7 +39,7 @@ aws elbv2 describe-target-health \
       --desired-configuration "LaunchTemplate={LaunchTemplateName=sparko-prod-api,Version=<previous-version>}"
   ```
 - **RDS unreachable**: see `RDS-CPU` / `RDS-storage-low` runbook entries.
-- **OOM**: bump `api_instance_type` in `terraform.tfvars` and re-apply.
+- **OOM**: edit the API tier launch template + ASG instance type in the EC2 console, then trigger an instance refresh.
 
 ---
 
@@ -112,14 +112,14 @@ aws autoscaling start-instance-refresh --auto-scaling-group-name sparko-prod-api
 
 ```bash
 # Bump storage. RDS supports online resize (gp3 auto-storage-scaling is
-# enabled by default, but we cap at allocated_storage in Terraform).
+# enabled by default, but we cap at the allocated_storage configured in the RDS console).
 # Quick fix:
 aws rds modify-db-instance \
     --db-instance-identifier sparko-prod-mysql \
     --allocated-storage 50 \
     --apply-immediately
 
-# Then update terraform.tfvars so plan stays clean:
+# Then keep the change in the AWS console (or wherever you track infra config).
 #    db_allocated_storage = 50
 ```
 
@@ -134,7 +134,7 @@ If storage is filling fast, audit log tables — `password_reset_tokens` and
 
 ```bash
 # Peek the message (does not delete).
-aws sqs receive-message --queue-url "$(terraform -chdir=infra output -raw subscription_queue_url)" \
+aws sqs receive-message --queue-url ""$SPARKO_QUEUE_URL"" \
     --visibility-timeout 0 --message-attribute-names All --max-number-of-messages 5
 # Or look at the DLQ specifically:
 aws sqs receive-message --queue-url <DLQ URL from console>
@@ -227,7 +227,7 @@ aws autoscaling start-instance-refresh --auto-scaling-group-name sparko-prod-api
 aws secretsmanager get-random-password --password-length 32 --exclude-punctuation
 
 # 2. For the DB password, run an in-place RDS modify with the new master
-#    password; the secret has lifecycle.ignore_changes so Terraform won't fight.
+#    password; subsequent rotation in the Secrets Manager console is independent of the original creation.
 aws rds modify-db-instance --db-instance-identifier sparko-prod-mysql \
     --master-user-password <new-password> --apply-immediately
 
@@ -274,7 +274,7 @@ aws autoscaling describe-auto-scaling-groups \
 aws logs tail /sparko/api --follow --filter-pattern 'level = "error"'
 
 # Get a one-line health summary.
-URL=$(terraform -chdir=infra output -raw public_url)
+URL="$SPARKO_URL"
 echo "nginx:   $(curl -sw '%{http_code}' -o /dev/null $URL/nginx-health)"
 echo "healthz: $(curl -sw '%{http_code}' -o /dev/null $URL/healthz)"
 echo "readyz:  $(curl -sw '%{http_code}' -o /dev/null $URL/readyz)"

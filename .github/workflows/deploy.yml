@@ -7,7 +7,7 @@ name: Deploy
 #      its instances with min_healthy=90% so no in-flight requests are lost.
 #   3. Update the subscription-renewal Lambda code from lambda/.
 #
-# Auth uses GitHub OIDC → IAM role (provisioned by terraform/iam.tf). No long-
+# Auth uses GitHub OIDC → IAM role configured manually in the AWS console. No long-
 # lived AWS access keys live in the repo.
 
 on:
