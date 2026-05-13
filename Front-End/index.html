@@ -132,7 +132,7 @@
                           + ' <span class="rating-text">' + rating + ' (' + count + ')</span></div>';
                     html += '    <div class="product-card-price">' + formatCurrency(p.price) + '</div>';
                     html += '    <div class="product-card-actions">';
-                    html += '      <a href="products.html" class="btn btn-small btn-primary">View</a>';
+                    html += '      <a href="product.html?id=' + p.id + '" class="btn btn-small btn-primary">View</a>';
                     html += '    </div>';
                     html += '  </div>';
                     html += '</div>';
@@ -143,5 +143,6 @@
             }
         })();
     </script>
+    <script src="js/tidio.js"></script>
 </body>
 </html>

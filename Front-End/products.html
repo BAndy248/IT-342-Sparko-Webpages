@@ -60,13 +60,8 @@
         <div class="pagination" id="pagination"></div>
     </div>
 
-    <!-- Product detail modal: shows full info + reviews + comment form -->
-    <div class="modal-overlay" id="product-modal">
-        <div class="modal modal-wide">
-            <button class="modal-close" onclick="closeProduct()">×</button>
-            <div id="product-modal-content"></div>
-        </div>
-    </div>
+    <!-- The per-product detail page (product.html?id=N) lives at /product.html
+         and handles reviews. The catalog page no longer needs an inline modal. -->
 
     <div id="footer-mount"></div>
 
@@ -76,5 +71,6 @@
     <script src="js/toast.js"></script>
     <script src="js/cart-badge.js"></script>
     <script src="js/products.js"></script>
+    <script src="js/tidio.js"></script>
 </body>
 </html>
