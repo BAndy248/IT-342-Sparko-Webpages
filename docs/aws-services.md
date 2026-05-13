@@ -18,12 +18,12 @@ over alternatives.
 | **ACM** | Public ALB cert (`example.com` + SAN) and CloudFront cert (`cdn.example.com`, must be us-east-1) | DNS validation auto-creates the records in Route 53 — no manual ops. |
 | **CloudWatch Logs** | Three log groups (`/sparko/api`, `/sparko/web`, Lambda) | Application logger writes structured JSON; the unified agent on each EC2 ships log files; Lambda automatically gets its own group. |
 | **CloudWatch Metrics + Alarms** | ALB 5xx, p99 latency, healthy host count, RDS CPU/storage/connections, SQS DLQ depth | Each alarm targets a specific failure mode so operator gets a precise signal, not "something is wrong". |
-| **CloudWatch Dashboard** | Single-pane overview of ALB, healthy hosts, RDS, recent errors | Built in Terraform so it's reproducible and not a manual console artifact. |
+| **CloudWatch Dashboard** | Single-pane overview of ALB, healthy hosts, RDS, recent errors | Pulls live metrics from every tier into one view; widget configs are saved JSON for reproducibility. |
 | **SNS** | Single `alerts` topic; alarms publish here; email subscription notifies operator | Topic is the indirection point — we can add Slack / PagerDuty / Opsgenie subscriptions later without touching the alarms. |
 | **EventBridge** | Hourly schedule that invokes the renewal Lambda | Native AWS cron — no extra infra. Decoupled from Lambda so we could route to Step Functions later. |
 | **Lambda** | Subscription renewal (scan + consumer in one function) | Tiny footprint; scales by SQS depth; no idle cost. Runs inside the VPC to reach RDS. |
 | **SQS (×2)** | Renewal queue + DLQ | Buffers between EventBridge fan-out and per-subscription processing. Visibility-timeout + redrive policy give automatic retry-with-backoff. |
-| **SES v2** | Transactional email (password reset, renewal confirmations) | One IAM permission, one verified identity. Domain identity auto-publishes DKIM via Route 53 records Terraform manages. |
+| **SES v2** | Transactional email (password reset, renewal confirmations) | One IAM permission, one verified identity. Domain identity is paired with Route 53 DKIM CNAMEs added at setup time. |
 | **IAM** | EC2 instance profile, Lambda execution role, GitHub OIDC deploy role | Each role has an inline policy limited to the specific resources it touches. No `*` ARNs except where AWS requires (`ses:SendEmail`). |
 | **Systems Manager** | Session Manager for shell access; AMI lookup via `/aws/service/...` SSM parameter | Replaces SSH keys for operator access. Works in private subnets without a bastion. |
 | **GitHub OIDC → AWS STS** | CI assumes a role to deploy without storing AWS keys in repo | Industry best practice for keyless CI deploys. |
@@ -38,15 +38,15 @@ over alternatives.
   rewrite (no Express middleware); the EC2-based API is fine for class.
 - **DynamoDB** — NoSQL store. The data model (orders, addresses, items, joins)
   is relational; a key-value store would force denormalization.
-- **CloudFormation / CDK** — Equally valid IaC choices. Picked Terraform for
-  multi-cloud familiarity and the broader ecosystem.
+- **CloudFormation / CDK** — Equally valid IaC choices, but the stack was
+  set up directly in the AWS Console + CLI for the class demo so we could
+  show the moving pieces individually.
 
 ## Cost-saving choices
 
-- `single_nat_gateway = true` — one NAT GW instead of one per AZ (~$32/mo saved).
-- `db.t3.micro` RDS — fits the small-instance free tier window.
-- `t3.micro` / `t3.small` EC2 — burstable instances cover demo traffic for free
-  or near-free.
-- CloudFront `PriceClass_100` — only NA + EU edges; reduces request cost by ~30%.
+- **One NAT Gateway** instead of one per AZ (~$32/mo saved).
+- **db.t3.micro** RDS — fits the small-instance free tier window.
+- **t3.micro EC2** — burstable instances cover demo traffic for free or near-free.
+- **CloudFront `PriceClass_100`** — only NA + EU edges; reduces request cost by ~30%.
 - ALB access logs S3 bucket: 90-day lifecycle expiration so logs don't pile up.
 - CloudWatch log retention capped at 30 days per group.

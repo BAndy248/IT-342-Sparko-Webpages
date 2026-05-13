@@ -41,7 +41,9 @@ detect_os() {
     case "${OS_ID}:${OS_LIKE}" in
         amzn*|rhel*|centos*|fedora*|*:*rhel*|*:*fedora*)
             OS_FAMILY="rhel"
-            PKG_INSTALL="dnf install -y"
+            # --allowerasing lets dnf swap curl-minimal for full curl on
+            # Amazon Linux 2023 (where the two packages conflict by default).
+            PKG_INSTALL="dnf install -y --allowerasing"
             command -v dnf >/dev/null 2>&1 || PKG_INSTALL="yum install -y"
             ;;
         ubuntu*|debian*|*:*debian*|*:*ubuntu*)

@@ -60,14 +60,6 @@ jobs:
             bash -n "$f"
           done
 
-  terraform-fmt:
-    name: Terraform fmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
-        with: { terraform_version: 1.7.5 }
-      - run: terraform -chdir=infra fmt -check -recursive
 
   frontend:
     name: Frontend lint
