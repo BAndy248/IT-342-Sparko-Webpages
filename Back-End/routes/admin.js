@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const { authenticate, authorize } = require('../middleware/auth');
+const { logger } = require('../utils/logger');
 
 // All admin routes require authentication + admin role
 // This prevents forceful browsing — users cannot access admin endpoints
@@ -28,7 +29,7 @@ router.get('/stats', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Admin stats error:', err.message);
+        logger.error('admin_stats_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch stats.' });
     }
 });
@@ -75,7 +76,7 @@ router.get('/users', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Admin list users error:', err.message);
+        logger.error('admin_list_users_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch users.' });
     }
 });
@@ -106,7 +107,7 @@ router.put('/users/:id/role', [
 
         res.json({ message: 'User role updated.' });
     } catch (err) {
-        console.error('Update role error:', err.message);
+        logger.error('admin_update_role_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update role.' });
     }
 });
@@ -136,7 +137,7 @@ router.put('/users/:id/status', [
 
         res.json({ message: `User ${req.body.is_active ? 'activated' : 'deactivated'}.` });
     } catch (err) {
-        console.error('Update user status error:', err.message);
+        logger.error('admin_update_user_status_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update user status.' });
     }
 });
@@ -184,7 +185,7 @@ router.get('/orders', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Admin list orders error:', err.message);
+        logger.error('admin_list_orders_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch orders.' });
     }
 });
@@ -211,7 +212,7 @@ router.put('/orders/:id/status', [
 
         res.json({ message: 'Order status updated.' });
     } catch (err) {
-        console.error('Update order status error:', err.message);
+        logger.error('admin_update_order_status_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update order status.' });
     }
 });
@@ -240,7 +241,7 @@ router.post('/products', [
 
         res.status(201).json({ message: 'Product added.', id: result.insertId });
     } catch (err) {
-        console.error('Add product error:', err.message);
+        logger.error('admin_add_product_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to add product.' });
     }
 });
@@ -276,7 +277,7 @@ router.put('/products/:id', [
 
         res.json({ message: 'Product updated.' });
     } catch (err) {
-        console.error('Update product error:', err.message);
+        logger.error('admin_update_product_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update product.' });
     }
 });

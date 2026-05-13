@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { logger } = require('../utils/logger');
 
 router.use(authenticate);
 
@@ -47,7 +48,7 @@ router.get('/', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Get orders error:', err.message);
+        logger.error('orders_list_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch orders.' });
     }
 });
@@ -77,7 +78,7 @@ router.get('/:id', async (req, res) => {
 
         res.json({ order: orders[0], items });
     } catch (err) {
-        console.error('Get order error:', err.message);
+        logger.error('orders_get_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch order.' });
     }
 });
@@ -97,7 +98,7 @@ router.put('/:id/cancel', async (req, res) => {
 
         res.json({ message: 'Order cancelled.' });
     } catch (err) {
-        console.error('Cancel order error:', err.message);
+        logger.error('orders_cancel_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to cancel order.' });
     }
 });

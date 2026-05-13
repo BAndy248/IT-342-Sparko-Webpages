@@ -1,0 +1,109 @@
+name: Deploy
+
+# Deploys the live stack:
+#   1. Sync Front-End/{css,js,Fonts,Images} to the static-assets S3 bucket and
+#      invalidate CloudFront so users see the new build immediately.
+#   2. Trigger ASG instance refresh on the API and Web tiers — each ASG rolls
+#      its instances with min_healthy=90% so no in-flight requests are lost.
+#   3. Update the subscription-renewal Lambda code from lambda/.
+#
+# Auth uses GitHub OIDC → IAM role (provisioned by terraform/iam.tf). No long-
+# lived AWS access keys live in the repo.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # needed to obtain OIDC tokens
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT: sparko
+  ENVIRONMENT: prod
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region:     ${{ env.AWS_REGION }}
+
+      - name: Discover infra resource names
+        id: discover
+        run: |
+          set -e
+          STATIC_BUCKET=$(aws s3api list-buckets --query "Buckets[?starts_with(Name, '${PROJECT}-${ENVIRONMENT}-static-')].Name | [0]" --output text)
+          CF_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='${PROJECT}-${ENVIRONMENT} static asset CDN'].Id | [0]" --output text)
+          API_ASG="${PROJECT}-${ENVIRONMENT}-api"
+          WEB_ASG="${PROJECT}-${ENVIRONMENT}-web"
+          LAMBDA_NAME="${PROJECT}-${ENVIRONMENT}-subscription-renewal"
+
+          echo "static_bucket=$STATIC_BUCKET" >> "$GITHUB_OUTPUT"
+          echo "cf_id=$CF_ID"                 >> "$GITHUB_OUTPUT"
+          echo "api_asg=$API_ASG"             >> "$GITHUB_OUTPUT"
+          echo "web_asg=$WEB_ASG"             >> "$GITHUB_OUTPUT"
+          echo "lambda_name=$LAMBDA_NAME"     >> "$GITHUB_OUTPUT"
+
+      # ----- Front-End → S3 + CloudFront -----
+      - name: Sync static assets to S3
+        if: steps.discover.outputs.static_bucket != 'None' && steps.discover.outputs.static_bucket != ''
+        run: |
+          aws s3 sync Front-End/css/    s3://${{ steps.discover.outputs.static_bucket }}/css/    --delete --cache-control "public, max-age=604800, immutable"
+          aws s3 sync Front-End/js/     s3://${{ steps.discover.outputs.static_bucket }}/js/     --delete --cache-control "public, max-age=604800, immutable"
+          aws s3 sync Front-End/Fonts/  s3://${{ steps.discover.outputs.static_bucket }}/Fonts/  --delete --cache-control "public, max-age=2592000, immutable"
+          aws s3 sync Front-End/Images/ s3://${{ steps.discover.outputs.static_bucket }}/Images/ --delete --cache-control "public, max-age=2592000, immutable"
+
+      - name: Invalidate CloudFront
+        if: steps.discover.outputs.cf_id != 'None' && steps.discover.outputs.cf_id != ''
+        run: |
+          aws cloudfront create-invalidation \
+              --distribution-id "${{ steps.discover.outputs.cf_id }}" \
+              --paths "/css/*" "/js/*" "/Fonts/*" "/Images/*"
+
+      # ----- Lambda subscription-renewal -----
+      - name: Setup Node for Lambda packaging
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Package + deploy Lambda
+        run: |
+          cd lambda/subscription-renewal
+          npm install --omit=dev --no-audit --no-fund
+          zip -qr ../function.zip .
+          cd ..
+          aws lambda update-function-code \
+              --function-name "${{ steps.discover.outputs.lambda_name }}" \
+              --zip-file fileb://function.zip
+
+      # ----- EC2 tiers: rolling refresh -----
+      - name: Roll the API ASG
+        run: |
+          aws autoscaling start-instance-refresh \
+              --auto-scaling-group-name "${{ steps.discover.outputs.api_asg }}" \
+              --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":180}'
+
+      - name: Roll the Web ASG
+        run: |
+          aws autoscaling start-instance-refresh \
+              --auto-scaling-group-name "${{ steps.discover.outputs.web_asg }}" \
+              --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":120}'
+
+      - name: Summary
+        run: |
+          echo "## Deploy kicked off" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Static assets synced to ${{ steps.discover.outputs.static_bucket }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- CloudFront invalidated"                                              >> "$GITHUB_STEP_SUMMARY"
+          echo "- Lambda \`${{ steps.discover.outputs.lambda_name }}\` updated"        >> "$GITHUB_STEP_SUMMARY"
+          echo "- API ASG \`${{ steps.discover.outputs.api_asg }}\` rolling"            >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web ASG \`${{ steps.discover.outputs.web_asg }}\` rolling"            >> "$GITHUB_STEP_SUMMARY"

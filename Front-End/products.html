@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav" id="main-nav">
+            <a href="products.html" class="active">Products</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="cart.html">Cart <span id="cart-badge" class="cart-badge" style="display:none;">0</span></a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Shop Sparko Water</h1>
+
+        <!-- Search + filter bar -->
+        <div class="shop-toolbar">
+            <div class="search-bar">
+                <input type="search" id="search-input" placeholder="Search by name, description, or category…" />
+                <button class="btn btn-primary" id="search-btn">Search</button>
+                <button class="btn btn-secondary" id="clear-btn">Clear</button>
+            </div>
+            <div class="filter-bar">
+                <select id="category-filter">
+                    <option value="">All categories</option>
+                </select>
+                <select id="sort-filter">
+                    <option value="">Sort: default</option>
+                    <option value="price_asc">Price: low → high</option>
+                    <option value="price_desc">Price: high → low</option>
+                    <option value="name">Name A–Z</option>
+                    <option value="rating">Highest rated</option>
+                    <option value="newest">Newest</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Live result info -->
+        <div id="result-info" class="result-info"></div>
+
+        <!-- Product grid -->
+        <div id="products-grid" class="product-grid">
+            <div class="empty-state"><p>Loading products…</p></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Product detail modal: shows full info + reviews + comment form -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal modal-wide">
+            <button class="modal-close" onclick="closeProduct()">×</button>
+            <div id="product-modal-content"></div>
+        </div>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/cart-badge.js"></script>
+    <script src="js/products.js"></script>
+</body>
+</html>

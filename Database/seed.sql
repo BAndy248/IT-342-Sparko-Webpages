@@ -22,3 +22,10 @@ INSERT INTO products (name, description, price, size, category) VALUES
 ('Alkaline Water Case',      '24-pack of 16.9oz alkaline water bottles',                   7.99,  '16.9 oz Case',  'Alkaline'),
 ('Sparkling Water Case',     '24-pack of 12oz naturally carbonated sparkling water',       8.99,  '12 oz Case',    'Sparkling'),
 ('Sparkling Water Variety',  'Mixed flavor sparkling water - lemon, lime, berry, plain',   9.99,  '12 oz Case',    'Sparkling');
+
+-- Sample bundle rewards: thresholds get progressively bigger discounts.
+INSERT INTO bundle_rewards (name, description, min_items, category, discount_percent, is_active) VALUES
+('Buy 3, Save 5%',   'Buy any 3 items and save 5% on your order',          3, NULL,        5.00,  TRUE),
+('Buy 6, Save 10%',  'Buy any 6 items and save 10% on your order',         6, NULL,        10.00, TRUE),
+('Buy 10, Save 15%', 'Buy any 10 items and save 15% on your order',        10, NULL,       15.00, TRUE),
+('Sparkling Bundle', 'Buy 4 Sparkling items and save 12%',                  4, 'Sparkling', 12.00, TRUE);

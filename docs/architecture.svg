@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" font-family="Helvetica, Arial, sans-serif" font-size="12">
+  <!-- background -->
+  <rect width="1100" height="780" fill="#fafafa"/>
+  <text x="20" y="30" font-size="22" font-weight="bold" fill="#083D77">Sparko Water — AWS Architecture</text>
+  <text x="20" y="50" fill="#555">Public ALB → Web (nginx) → Internal ALB → API (Node.js) → RDS MySQL, with Lambda subscription renewal + CloudFront for static assets</text>
+
+  <!-- Internet -->
+  <g>
+    <ellipse cx="60" cy="160" rx="40" ry="22" fill="#fff" stroke="#333"/>
+    <text x="60" y="164" text-anchor="middle">Internet</text>
+  </g>
+
+  <!-- Route53 + WAF -->
+  <rect x="130" y="80" width="120" height="50" rx="6" fill="#FFE9B0" stroke="#b08c20"/>
+  <text x="190" y="100" text-anchor="middle" font-weight="bold">Route 53</text>
+  <text x="190" y="116" text-anchor="middle">DNS + ACM cert</text>
+
+  <rect x="130" y="140" width="120" height="50" rx="6" fill="#FFE9B0" stroke="#b08c20"/>
+  <text x="190" y="160" text-anchor="middle" font-weight="bold">AWS WAF</text>
+  <text x="190" y="176" text-anchor="middle">Common+BadInputs+RL</text>
+
+  <line x1="100" y1="160" x2="130" y2="160" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- Public ALB -->
+  <rect x="290" y="140" width="140" height="50" rx="6" fill="#FFD7B0" stroke="#b06820"/>
+  <text x="360" y="160" text-anchor="middle" font-weight="bold">Public ALB</text>
+  <text x="360" y="176" text-anchor="middle">80/443, S3 access logs</text>
+  <line x1="250" y1="165" x2="290" y2="165" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- VPC bounding box -->
+  <rect x="280" y="210" width="800" height="500" rx="8" fill="none" stroke="#0A6AA0" stroke-dasharray="4 4"/>
+  <text x="290" y="228" fill="#0A6AA0" font-weight="bold">VPC 10.20.0.0/16 — two AZs</text>
+
+  <!-- AZ A and AZ B labels -->
+  <text x="320" y="252" fill="#666" font-style="italic">AZ a (us-east-1a)</text>
+  <text x="320" y="478" fill="#666" font-style="italic">AZ b (us-east-1b)</text>
+
+  <!-- Web tier (AZ a) -->
+  <rect x="320" y="260" width="140" height="56" rx="6" fill="#D6E9F8" stroke="#0A6AA0"/>
+  <text x="390" y="280" text-anchor="middle" font-weight="bold">EC2 web-1</text>
+  <text x="390" y="296" text-anchor="middle">nginx</text>
+  <text x="390" y="310" text-anchor="middle" font-size="10" fill="#555">private-app subnet</text>
+
+  <!-- Web tier (AZ b) -->
+  <rect x="320" y="490" width="140" height="56" rx="6" fill="#D6E9F8" stroke="#0A6AA0"/>
+  <text x="390" y="510" text-anchor="middle" font-weight="bold">EC2 web-2</text>
+  <text x="390" y="526" text-anchor="middle">nginx</text>
+  <text x="390" y="540" text-anchor="middle" font-size="10" fill="#555">private-app subnet</text>
+
+  <!-- Public ALB → web -->
+  <line x1="360" y1="190" x2="360" y2="260" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="380" y1="190" x2="380" y2="490" stroke="#333" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- Internal ALB -->
+  <rect x="510" y="370" width="140" height="50" rx="6" fill="#FFD7B0" stroke="#b06820"/>
+  <text x="580" y="390" text-anchor="middle" font-weight="bold">Internal ALB</text>
+  <text x="580" y="406" text-anchor="middle">port 80, VPC only</text>
+
+  <line x1="460" y1="288" x2="510" y2="385" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="460" y1="518" x2="510" y2="405" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- API tier (AZ a) -->
+  <rect x="710" y="260" width="140" height="56" rx="6" fill="#D6F8DC" stroke="#1B7B3A"/>
+  <text x="780" y="280" text-anchor="middle" font-weight="bold">EC2 api-1</text>
+  <text x="780" y="296" text-anchor="middle">Node.js</text>
+  <text x="780" y="310" text-anchor="middle" font-size="10" fill="#555">private-app subnet</text>
+
+  <!-- API tier (AZ b) -->
+  <rect x="710" y="490" width="140" height="56" rx="6" fill="#D6F8DC" stroke="#1B7B3A"/>
+  <text x="780" y="510" text-anchor="middle" font-weight="bold">EC2 api-2</text>
+  <text x="780" y="526" text-anchor="middle">Node.js</text>
+  <text x="780" y="540" text-anchor="middle" font-size="10" fill="#555">private-app subnet</text>
+
+  <line x1="650" y1="385" x2="710" y2="290" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="650" y1="405" x2="710" y2="518" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- RDS -->
+  <rect x="900" y="370" width="160" height="60" rx="6" fill="#F8D6E6" stroke="#B0307A"/>
+  <text x="980" y="390" text-anchor="middle" font-weight="bold">RDS MySQL 8</text>
+  <text x="980" y="406" text-anchor="middle">Multi-AZ</text>
+  <text x="980" y="422" text-anchor="middle" font-size="10" fill="#555">private-data subnets</text>
+
+  <line x1="850" y1="290" x2="900" y2="380" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="850" y1="518" x2="900" y2="420" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- Secrets Manager + CloudWatch (right column) -->
+  <rect x="900" y="240" width="160" height="50" rx="6" fill="#FFEAA8" stroke="#a8851d"/>
+  <text x="980" y="260" text-anchor="middle" font-weight="bold">Secrets Manager</text>
+  <text x="980" y="276" text-anchor="middle">db + app secrets</text>
+
+  <rect x="900" y="450" width="160" height="80" rx="6" fill="#E5D6F8" stroke="#5530B0"/>
+  <text x="980" y="470" text-anchor="middle" font-weight="bold">CloudWatch</text>
+  <text x="980" y="486" text-anchor="middle">Logs / Metrics</text>
+  <text x="980" y="502" text-anchor="middle">Alarms → SNS</text>
+  <text x="980" y="518" text-anchor="middle">Dashboard</text>
+
+  <!-- CloudFront + S3 (top right) -->
+  <rect x="710" y="80" width="160" height="50" rx="6" fill="#F8E0D6" stroke="#B0581D"/>
+  <text x="790" y="100" text-anchor="middle" font-weight="bold">CloudFront</text>
+  <text x="790" y="116" text-anchor="middle">edge cache, TLS</text>
+
+  <rect x="900" y="80" width="160" height="50" rx="6" fill="#F8E0D6" stroke="#B0581D"/>
+  <text x="980" y="100" text-anchor="middle" font-weight="bold">S3 static-assets</text>
+  <text x="980" y="116" text-anchor="middle">css/js/Fonts/Images</text>
+
+  <line x1="870" y1="105" x2="900" y2="105" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="60" y1="180" x2="60" y2="105" stroke="#333"/>
+  <line x1="60" y1="105" x2="710" y2="105" stroke="#333" marker-end="url(#arrow)"/>
+
+  <!-- Lambda subscription renewal pipeline (bottom band) -->
+  <rect x="290" y="600" width="780" height="90" rx="6" fill="#fff" stroke="#888" stroke-dasharray="3 3"/>
+  <text x="305" y="620" font-weight="bold" fill="#444">Async — subscription renewal pipeline</text>
+
+  <rect x="310" y="635" width="120" height="44" rx="6" fill="#FFE9B0" stroke="#b08c20"/>
+  <text x="370" y="652" text-anchor="middle" font-weight="bold">EventBridge</text>
+  <text x="370" y="668" text-anchor="middle">rate(1 hour)</text>
+
+  <rect x="470" y="635" width="120" height="44" rx="6" fill="#D6F8DC" stroke="#1B7B3A"/>
+  <text x="530" y="652" text-anchor="middle" font-weight="bold">Lambda</text>
+  <text x="530" y="668" text-anchor="middle">renewal</text>
+
+  <rect x="630" y="635" width="120" height="44" rx="6" fill="#FFE9B0" stroke="#b08c20"/>
+  <text x="690" y="652" text-anchor="middle" font-weight="bold">SQS queue</text>
+  <text x="690" y="668" text-anchor="middle">+ DLQ</text>
+
+  <rect x="790" y="635" width="120" height="44" rx="6" fill="#F8D6E6" stroke="#B0307A"/>
+  <text x="850" y="652" text-anchor="middle" font-weight="bold">RDS / SES</text>
+  <text x="850" y="668" text-anchor="middle">order + email</text>
+
+  <rect x="950" y="635" width="100" height="44" rx="6" fill="#E5D6F8" stroke="#5530B0"/>
+  <text x="1000" y="652" text-anchor="middle" font-weight="bold">CloudWatch</text>
+  <text x="1000" y="668" text-anchor="middle">+ alarms</text>
+
+  <line x1="430" y1="657" x2="470" y2="657" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="590" y1="657" x2="630" y2="657" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="750" y1="657" x2="790" y2="657" stroke="#333" marker-end="url(#arrow)"/>
+  <line x1="910" y1="657" x2="950" y2="657" stroke="#333" marker-end="url(#arrow)"/>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="760" fill="#777" font-size="10">Generated for IT-342 cloud development class — Terraform-provisioned, see docs/aws-services.md for the rationale per service.</text>
+</svg>

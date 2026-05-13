@@ -1,0 +1,338 @@
+#!/usr/bin/env bash
+#
+# Backend tier setup — turns a fresh EC2 instance into a Sparko API node.
+#
+# What it does:
+#   1. Installs Node.js 20 (via NodeSource) and build tools.
+#   2. Creates an unprivileged 'sparko' system user.
+#   3. Copies the application from this repo (or clones REPO_URL if not already
+#      present in /opt/sparko) and runs `npm ci`.
+#   4. Generates /opt/sparko/Back-End/.env from current shell env vars
+#      (with sensible defaults + a random JWT_SECRET if not supplied).
+#   5. Registers a systemd service that runs the API as the 'sparko' user.
+#   6. Installs the CloudWatch agent and tails the systemd journal for the
+#      API service into CloudWatch Logs — so logs survive instance termination
+#      and are aggregated across every node behind the ALB.
+#   7. Opens local firewall (if firewalld is running) for the API port — the
+#      ALB security group still controls inbound access at the network layer.
+#
+# Important env vars (with defaults):
+#   APP_USER           = sparko
+#   APP_DIR            = /opt/sparko
+#   PORT               = 3000
+#   NODE_ENV           = production
+#   DB_HOST/DB_USER/…  = required for the app to start
+#   JWT_SECRET         = auto-generated if not provided
+#   AWS_REGION         = detected from EC2 metadata
+#   CLOUDWATCH_LOG_GROUP = /sparko/api
+#   REPO_URL           = optional git URL to clone if /opt/sparko is empty
+#   BRANCH             = git branch, default 'main'
+
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/common.sh"
+
+APP_USER="${APP_USER:-sparko}"
+APP_DIR="${APP_DIR:-/opt/sparko}"
+PORT="${PORT:-3000}"
+NODE_ENV="${NODE_ENV:-production}"
+NODE_MAJOR="${NODE_MAJOR:-20}"
+CLOUDWATCH_LOG_GROUP="${CLOUDWATCH_LOG_GROUP:-/sparko/api}"
+SERVICE_NAME="sparko-api"
+REPO_URL="${REPO_URL:-}"
+BRANCH="${BRANCH:-main}"
+
+install_node() {
+    if command -v node >/dev/null 2>&1; then
+        local cur
+        cur=$(node -v | sed 's/^v//;s/\..*//')
+        if [[ "$cur" -ge "$NODE_MAJOR" ]]; then
+            log "Node.js v${cur} already installed."
+            return 0
+        fi
+    fi
+
+    log "Installing Node.js ${NODE_MAJOR}.x from NodeSource…"
+    if [[ "$OS_FAMILY" == "rhel" ]]; then
+        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        pkg_install nodejs gcc-c++ make git
+    else
+        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+        pkg_install nodejs build-essential git
+    fi
+    node -v
+}
+
+create_user() {
+    if id -u "$APP_USER" >/dev/null 2>&1; then
+        log "User '${APP_USER}' already exists."
+    else
+        log "Creating system user '${APP_USER}'…"
+        useradd --system --home "$APP_DIR" --shell /sbin/nologin "$APP_USER"
+    fi
+    install -d -o "$APP_USER" -g "$APP_USER" -m 0755 "$APP_DIR"
+}
+
+sync_code() {
+    # If the script is being run from inside the repo (i.e. operator copied the
+    # repo to the instance and ran ./setup/backend-setup.sh), prefer the local
+    # copy. Otherwise, clone REPO_URL if provided.
+    if [[ -d "${REPO_DIR}/Back-End" ]]; then
+        log "Syncing code from ${REPO_DIR} to ${APP_DIR}…"
+        rsync -a --delete \
+            --exclude='.git' --exclude='node_modules' --exclude='.env' \
+            "${REPO_DIR}/" "${APP_DIR}/"
+    elif [[ -n "$REPO_URL" ]]; then
+        if [[ -d "${APP_DIR}/.git" ]]; then
+            log "Updating existing checkout in ${APP_DIR}…"
+            git -C "$APP_DIR" fetch --depth 1 origin "$BRANCH"
+            git -C "$APP_DIR" reset --hard "origin/${BRANCH}"
+        else
+            log "Cloning ${REPO_URL} (${BRANCH}) into ${APP_DIR}…"
+            git clone --depth 1 -b "$BRANCH" "$REPO_URL" "$APP_DIR"
+        fi
+    else
+        die "No source in ${REPO_DIR} and REPO_URL is not set."
+    fi
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+}
+
+install_deps() {
+    log "Running 'npm ci' in ${APP_DIR}/Back-End…"
+    # `npm ci` requires package-lock.json. Fall back to `npm install --omit=dev`
+    # so a first deploy works without a committed lockfile.
+    sudo -u "$APP_USER" -H bash -lc "cd '${APP_DIR}/Back-End' && (npm ci --omit=dev 2>/dev/null || npm install --omit=dev)"
+}
+
+write_env_file() {
+    local env_file="${APP_DIR}/Back-End/.env"
+
+    # Pull defaults from this shell. Generate a JWT secret on first run.
+    local jwt
+    if [[ -f "$env_file" ]] && grep -q '^JWT_SECRET=' "$env_file"; then
+        jwt=$(grep '^JWT_SECRET=' "$env_file" | cut -d= -f2-)
+    elif [[ -n "${JWT_SECRET:-}" ]]; then
+        jwt="$JWT_SECRET"
+    else
+        jwt=$(LC_ALL=C tr -dc 'A-Za-z0-9_' </dev/urandom | head -c 64)
+    fi
+
+    local instance_id region
+    instance_id="${INSTANCE_ID:-$(default_instance_id)}"
+    region="${AWS_REGION:-$(default_region)}"
+
+    log "Writing ${env_file}…"
+    umask 077
+    cat >"$env_file" <<EOF
+# Generated by setup/backend-setup.sh on $(date -u +%Y-%m-%dT%H:%M:%SZ)
+NODE_ENV=${NODE_ENV}
+PORT=${PORT}
+FRONTEND_URL=${FRONTEND_URL:-}
+LOG_LEVEL=${LOG_LEVEL:-info}
+
+# Behind the AWS Application Load Balancer
+TRUST_PROXY=${TRUST_PROXY:-loopback, linklocal, uniquelocal}
+INSTANCE_ID=${instance_id}
+
+# Database
+DB_HOST=${DB_HOST:-}
+DB_PORT=${DB_PORT:-3306}
+DB_USER=${DB_USER:-}
+DB_PASSWORD=${DB_PASSWORD:-}
+DB_NAME=${DB_NAME:-sparko_water}
+DB_SSL=${DB_SSL:-relaxed}
+
+# Auth
+JWT_SECRET=${jwt}
+JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+RESET_TOKEN_EXPIRES_HOURS=${RESET_TOKEN_EXPIRES_HOURS:-1}
+
+# CloudWatch Logs (logger ships here directly)
+AWS_REGION=${region}
+CLOUDWATCH_LOG_GROUP=${CLOUDWATCH_LOG_GROUP}
+CLOUDWATCH_LOG_STREAM=sparko-api-${instance_id}
+CLOUDWATCH_RETENTION_DAYS=${CLOUDWATCH_RETENTION_DAYS:-30}
+
+# Square API
+SQUARE_ACCESS_TOKEN=${SQUARE_ACCESS_TOKEN:-}
+SQUARE_LOCATION_ID=${SQUARE_LOCATION_ID:-}
+SQUARE_ENVIRONMENT=${SQUARE_ENVIRONMENT:-sandbox}
+
+# HSTS — only emit Strict-Transport-Security when the site is HTTPS-fronted.
+# Default off so HTTP-only / no-domain deployments don't poison browser caches.
+ENABLE_HSTS=${ENABLE_HSTS:-false}
+
+# SES transactional email — empty disables sending (forgot-password returns
+# the reset URL in the API response instead).
+SES_FROM=${SES_FROM:-}
+EOF
+    chown "$APP_USER:$APP_USER" "$env_file"
+    chmod 0640 "$env_file"
+
+    # Light validation — warn loudly if the DB info is blank.
+    if [[ -z "${DB_HOST:-}" || -z "${DB_USER:-}" || -z "${DB_PASSWORD:-}" ]]; then
+        warn "DB_HOST/DB_USER/DB_PASSWORD are not set — edit ${env_file} before starting the service."
+    fi
+}
+
+write_systemd_unit() {
+    local unit=/etc/systemd/system/${SERVICE_NAME}.service
+    log "Writing ${unit}…"
+    cat >"$unit" <<EOF
+[Unit]
+Description=Sparko Water API
+Documentation=https://github.com/BAndy248/IT-342-Sparko-Webpages
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${APP_USER}
+Group=${APP_USER}
+WorkingDirectory=${APP_DIR}/Back-End
+EnvironmentFile=${APP_DIR}/Back-End/.env
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+# Graceful shutdown matches server.js's SIGTERM handler so the ALB can
+# drain in-flight requests cleanly.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=${SERVICE_NAME}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable "$SERVICE_NAME"
+    log "Restarting ${SERVICE_NAME}…"
+    systemctl restart "$SERVICE_NAME"
+}
+
+install_cw_agent_for_api() {
+    log "Installing CloudWatch agent for backend logs/metrics…"
+    SERVICE_NAME="${SERVICE_NAME}" CLOUDWATCH_LOG_GROUP="${CLOUDWATCH_LOG_GROUP}" \
+        bash "${SCRIPT_DIR}/cloudwatch-agent.sh"
+
+    # Add the journald source for the API service so its stdout/stderr show up
+    # in CloudWatch even if the in-process winston-cloudwatch transport isn't
+    # configured. Belt + suspenders.
+    local cfg=/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    if [[ -f "$cfg" ]] && ! grep -q "${SERVICE_NAME}" "$cfg"; then
+        python3 - "$cfg" "${CLOUDWATCH_LOG_GROUP}" "${SERVICE_NAME}" <<'PY' || warn "Could not inject API journald source."
+import json, sys
+cfg_path, group, service = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(cfg_path) as fh:
+    cfg = json.load(fh)
+logs = cfg.setdefault("logs", {}).setdefault("logs_collected", {})
+files = logs.setdefault("files", {}).setdefault("collect_list", [])
+# The systemd-journal-upload package isn't always available; instead we tail
+# the journal via journalctl --output=json into a file. The agent picks that
+# file up. The systemd unit for the relay is dropped in by the shell script.
+files.append({
+    "file_path": f"/var/log/{service}.log",
+    "log_group_name": f"{group}/app",
+    "log_stream_name": "{instance_id}/" + service,
+    "retention_in_days": 30
+})
+with open(cfg_path, "w") as fh:
+    json.dump(cfg, fh, indent=2)
+PY
+
+        # Persistent journal → file shim so the CW agent can pick it up.
+        cat >/etc/systemd/system/${SERVICE_NAME}-journal-shim.service <<EOF
+[Unit]
+Description=Mirror ${SERVICE_NAME} journal to /var/log/${SERVICE_NAME}.log
+After=${SERVICE_NAME}.service
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c '/bin/journalctl -fu ${SERVICE_NAME}.service -o cat >> /var/log/${SERVICE_NAME}.log'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        touch /var/log/${SERVICE_NAME}.log
+        chown syslog:adm /var/log/${SERVICE_NAME}.log 2>/dev/null || true
+        systemctl daemon-reload
+        systemctl enable --now ${SERVICE_NAME}-journal-shim.service
+
+        /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+            -a fetch-config -m ec2 -s -c file:"$cfg" || warn "Agent reload failed."
+    fi
+}
+
+configure_firewall() {
+    # If firewalld is running we open the API port locally; the ALB SG is the
+    # real gate. On Ubuntu without UFW enabled this is a no-op.
+    if systemctl is-active --quiet firewalld 2>/dev/null; then
+        log "Opening TCP ${PORT}/tcp via firewalld…"
+        firewall-cmd --permanent --add-port="${PORT}/tcp"
+        firewall-cmd --reload
+    fi
+}
+
+health_check() {
+    log "Waiting for /healthz to respond on port ${PORT}…"
+    for i in {1..30}; do
+        if curl -fsS "http://127.0.0.1:${PORT}/healthz" >/dev/null 2>&1; then
+            log "Backend health check OK."
+            return 0
+        fi
+        sleep 1
+    done
+    warn "Backend did not respond to /healthz within 30s — check 'journalctl -u ${SERVICE_NAME}'."
+}
+
+print_summary() {
+    local instance_id
+    instance_id="${INSTANCE_ID:-$(default_instance_id)}"
+    cat <<EOF
+
+============================================================
+  Sparko backend tier setup complete
+============================================================
+  Instance:       ${instance_id}
+  Listening on:   0.0.0.0:${PORT}
+  Service:        systemctl status ${SERVICE_NAME}
+  Logs (local):   journalctl -fu ${SERVICE_NAME}
+  Logs (cloud):   CloudWatch group ${CLOUDWATCH_LOG_GROUP}
+  Health probes:  http://127.0.0.1:${PORT}/healthz (liveness)
+                  http://127.0.0.1:${PORT}/readyz  (readiness)
+------------------------------------------------------------
+  Register the instance with the ALB target group using:
+      /healthz   as the health check path
+      ${PORT}   as the traffic port
+============================================================
+EOF
+}
+
+main() {
+    ensure_root "$@"
+    detect_os
+    install_node
+    create_user
+    sync_code
+    install_deps
+    write_env_file
+    write_systemd_unit
+    install_cw_agent_for_api
+    configure_firewall
+    health_check
+    print_summary
+}
+
+main "$@"

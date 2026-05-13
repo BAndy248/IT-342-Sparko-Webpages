@@ -1,0 +1,37 @@
+# Copy to terraform.tfvars (NOT committed) and edit.
+
+project     = "sparko"
+environment = "prod"
+owner       = "your-name"
+region      = "us-east-1"
+
+# Multi-AZ across 2 zones; flip single_nat_gateway=false for full HA.
+az_count           = 2
+single_nat_gateway = true
+
+# Cost-friendly defaults — fine for a class demo.
+web_instance_type = "t3.micro"
+api_instance_type = "t3.small"
+db_instance_class = "db.t3.micro"
+
+# Domain + Route 53 (leave blank for the raw ALB demo URL).
+domain_name     = ""
+route53_zone_id = ""
+
+# SES from-address — must be verified before SES will send.
+ses_from_address = ""
+
+# Where alarms email.
+alarm_email = ""
+
+# GitHub repo slug — enables OIDC deploy role.
+github_repo = "BAndy248/IT-342-Sparko-Webpages"
+
+# Square keys — first-apply seed; rotate in the Secrets Manager console after.
+square_environment  = "sandbox"
+square_access_token = ""
+square_location_id  = ""
+
+# Optional bastion CIDR for SSH (otherwise everything is SSM-only).
+ssh_ingress_cidr = ""
+ssh_key_name     = ""

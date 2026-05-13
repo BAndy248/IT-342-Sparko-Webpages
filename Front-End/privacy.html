@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
+            <a href="about.html">About</a>
+            <a href="terms.html">Terms</a>
+            <a href="privacy.html" class="active">Privacy</a>
+            <a href="login.html">Sign in</a>
+        </nav>
+    </header>
+
+    <div class="content-page">
+        <h1>Privacy Policy</h1>
+        <p><em>Last updated: 2026-05-12. Class-project policy — not legal advice.</em></p>
+
+        <h2>What we collect</h2>
+        <ul>
+            <li><strong>Account info</strong>: username, email, name, phone number.</li>
+            <li><strong>Delivery info</strong>: street, city, state, ZIP code.</li>
+            <li><strong>Order history</strong>: products purchased, dates, quantities, totals.</li>
+            <li><strong>Subscription state</strong>: plan, frequency, next delivery.</li>
+            <li><strong>Rewards activity</strong>: points earned and redeemed.</li>
+            <li><strong>Reviews</strong>: ratings and comments you write are public, with your username.</li>
+            <li><strong>Operational data</strong>: request logs (IP, user agent, request id) for security and debugging,
+                retained 30 days in CloudWatch.</li>
+        </ul>
+
+        <p>We do <strong>not</strong> collect or store full payment card details. Card data is tokenized by
+        Square in the browser; Sparko only sees Square's opaque payment id.</p>
+
+        <h2>How we use your information</h2>
+        <ul>
+            <li>To deliver your orders and renew subscriptions.</li>
+            <li>To respond to support requests.</li>
+            <li>To send transactional emails (password reset, order confirmation, renewal receipt).</li>
+            <li>To detect and prevent fraud.</li>
+        </ul>
+
+        <p>We do not sell your personal information to third parties.</p>
+
+        <h2>Who we share with</h2>
+        <ul>
+            <li><strong>AWS</strong> hosts our infrastructure, database, and logs.</li>
+            <li><strong>Square</strong> processes payments and stores card details.</li>
+            <li><strong>SES</strong> (Amazon Simple Email Service) sends transactional email.</li>
+        </ul>
+
+        <h2>Cookies and tracking</h2>
+        <p>We use a single browser storage entry (<code>sparko_token</code>) to keep you signed in
+        between visits. We don't use third-party advertising trackers.</p>
+
+        <h2>Security</h2>
+        <ul>
+            <li>Passwords are stored as PBKDF2-HMAC-SHA512 hashes with 210,000 iterations.</li>
+            <li>Database storage is encrypted at rest (AWS KMS).</li>
+            <li>Traffic to AWS services (RDS, Secrets Manager, S3) is encrypted with TLS 1.2+.
+                Browser-to-Sparko traffic uses TLS 1.2+ <em>when a domain + TLS certificate are configured</em>;
+                this class-demo deployment runs over plain HTTP and should not be used with real customer data.</li>
+            <li>Database access is limited to private VPC subnets and a strict security-group chain.</li>
+        </ul>
+
+        <h2>Your rights</h2>
+        <ul>
+            <li><strong>Access</strong>: see your profile, addresses, orders, and rewards in your account.</li>
+            <li><strong>Correction</strong>: update your profile from the Profile page.</li>
+            <li><strong>Deletion</strong>: email
+                <a href="contact.html" title="Contact form">support@sparkowater.example.com</a>
+                to delete your account; we'll process the request within 30 days.</li>
+            <li><strong>Export</strong>: ask support and we'll send you a JSON dump of your data.</li>
+        </ul>
+
+        <h2>Children's privacy</h2>
+        <p>Sparko is not directed to anyone under 18 and we don't knowingly collect data from minors.</p>
+
+        <h2>Changes</h2>
+        <p>We'll post updates here with a revised "last updated" date.</p>
+
+        <h2>Contact</h2>
+        <p>Questions about privacy? Email
+        <a href="contact.html" title="Contact form">privacy@sparkowater.example.com</a>.</p>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+name: CI
+
+# Smoke tests + dependency checks. Runs on every push and PR.
+
+on:
+  push:
+    branches: [main, 'claude/**', 'Sprint-*']
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend syntax + audit
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Back-End
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Back-End/package.json
+
+      - run: npm install --no-audit --no-fund
+
+      # node --check on each source file catches syntax errors that bash -n
+      # can't reach; runs fast and doesn't need a DB.
+      - name: Syntax check
+        run: |
+          for f in $(find . -name "*.js" -not -path "./node_modules/*"); do
+            node --check "$f"
+          done
+
+      - name: Audit (high severity only)
+        run: npm audit --audit-level=high || true
+
+  lambda:
+    name: Lambda syntax
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lambda/subscription-renewal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: node --check index.js
+
+  shell:
+    name: Setup scripts syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n on every script
+        run: |
+          for f in setup/*.sh; do
+            echo "-- $f"
+            bash -n "$f"
+          done
+
+  terraform-fmt:
+    name: Terraform fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: 1.7.5 }
+      - run: terraform -chdir=infra fmt -check -recursive
+
+  frontend:
+    name: Frontend lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: HTML smoke check
+        run: |
+          # Catch obvious tag-mismatch issues without a full linter dependency.
+          for f in Front-End/*.html Front-End/admin/*.html; do
+            test -s "$f" || (echo "Empty: $f" && exit 1)
+            grep -q "</html>" "$f" || (echo "Missing </html> in $f" && exit 1)
+          done

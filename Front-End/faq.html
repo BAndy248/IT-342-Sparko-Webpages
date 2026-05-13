@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="about.html">About</a>
+            <a href="faq.html" class="active">FAQ</a>
+            <a href="login.html">Sign in</a>
+        </nav>
+    </header>
+
+    <div class="content-page">
+        <h1>Frequently Asked Questions</h1>
+
+        <h2>Subscriptions &amp; delivery</h2>
+        <p><strong>How often will I get water?</strong><br>
+        Choose weekly, bi-weekly, or monthly when you create the subscription. You can
+        change the frequency or pause anytime from the Subscriptions page.</p>
+
+        <p><strong>Can I skip a delivery?</strong><br>
+        Yes — pause the subscription before the next delivery date. We won't auto-renew
+        while it's paused.</p>
+
+        <p><strong>What if no one's home?</strong><br>
+        Our driver leaves the order at the address on file. For office accounts we
+        coordinate a drop-off window in the order notes.</p>
+
+        <h2>Payments</h2>
+        <p><strong>What payment methods do you accept?</strong><br>
+        Major credit and debit cards via Square. Card details never touch Sparko's
+        servers — Square tokenizes them in the browser.</p>
+
+        <p><strong>How does auto-renewal billing work?</strong><br>
+        On the renewal date, the subscription Lambda creates a new order and charges
+        your saved card. You'll get an email receipt.</p>
+
+        <p><strong>Can I get a refund?</strong><br>
+        Yes — email <a href="contact.html" title="Contact form">support</a> within
+        7 days. We'll refund through Square; the credit shows on your statement in
+        3-5 business days.</p>
+
+        <h2>Rewards</h2>
+        <p><strong>How do I earn points?</strong><br>
+        Every dollar spent earns 10 points. Posting a product review earns 25 points.</p>
+
+        <p><strong>How do I redeem points?</strong><br>
+        Enter the number of points to redeem in the cart sidebar at checkout. 100
+        points = $1 of discount.</p>
+
+        <p><strong>Do points expire?</strong><br>
+        Not yet. We may add an expiration policy if abuse becomes a problem; you'd be
+        notified in advance.</p>
+
+        <p><strong>What are tiers?</strong><br>
+        Lifetime points determine your tier: bronze (0+), silver (500+), gold (2000+),
+        platinum (5000+). Tier perks are coming soon.</p>
+
+        <h2>Account &amp; security</h2>
+        <p><strong>I forgot my password.</strong><br>
+        Use the <a href="forgot-password.html">password reset</a> page; we'll email
+        you a one-hour link.</p>
+
+        <p><strong>How is my data protected?</strong><br>
+        Passwords are hashed with PBKDF2-HMAC-SHA512. AWS-to-AWS traffic uses
+        TLS 1.2+; browser-to-Sparko traffic is HTTPS only when a domain is
+        configured (this demo is HTTP-only). Card data is handled entirely by
+        Square (PCI-compliant). See our <a href="privacy.html">privacy policy</a>
+        for details.</p>
+
+        <p><strong>Can I delete my account?</strong><br>
+        Email <a href="contact.html" title="Contact form">support</a> with your
+        request and we'll handle it within 30 days, in line with our privacy policy.</p>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+</body>
+</html>

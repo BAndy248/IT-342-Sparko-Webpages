@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav">
+            <a href="products.html">Products</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="rewards.html" class="active">Rewards</a>
+            <a href="cart.html">Cart <span id="cart-badge" class="cart-badge" style="display:none;">0</span></a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Sparko Rewards</h1>
+
+        <div class="rewards-hero">
+            <div class="card-title" style="color:#F4D35E;">Your balance</div>
+            <div class="rewards-points" id="hero-points">0</div>
+            <div style="font-family:'Harabara'; font-size:2vh;">points <span style="opacity:0.7;">(worth <span id="hero-value">$0.00</span>)</span></div>
+            <div class="rewards-tier"><span id="hero-tier">Bronze</span> Tier</div>
+            <div class="tier-progress"><div class="tier-progress-fill" id="hero-progress" style="width:0%"></div></div>
+            <div style="font-family:'Harabara'; font-size:1.6vh; opacity:0.85;" id="hero-progress-label">
+                0 lifetime points
+            </div>
+        </div>
+
+        <h2 class="page-title" style="font-size:3vh;">How it works</h2>
+        <div class="card-grid" style="margin-bottom:3vh;">
+            <div class="card">
+                <div class="card-title">Earn points</div>
+                <div class="card-value">10×</div>
+                <div class="card-label">points per $1 spent on every order</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Redeem at checkout</div>
+                <div class="card-value">100 → $1</div>
+                <div class="card-label">use points for discounts on any order</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Review &amp; earn</div>
+                <div class="card-value">+25</div>
+                <div class="card-label">points for every product review</div>
+            </div>
+        </div>
+
+        <h2 class="page-title" style="font-size:3vh;">Bundle Deals</h2>
+        <p style="font-family:'Harabara'; color:#083D77; font-size:1.7vh; max-width:600px;">
+            Add eligible items to your cart and the best bundle discount is applied automatically — no codes needed.
+        </p>
+        <div id="bundles" class="bundle-grid">
+            <div class="empty-state"><p>Loading bundles…</p></div>
+        </div>
+
+        <h2 class="page-title" style="font-size:3vh;">Points History</h2>
+        <div class="history-list" id="history">
+            <div class="empty-state"><p>Loading history…</p></div>
+        </div>
+        <div class="pagination" id="history-pagination"></div>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/cart-badge.js"></script>
+    <script src="js/rewards.js"></script>
+</body>
+</html>

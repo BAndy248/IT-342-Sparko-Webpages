@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const pool = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { logger } = require('../utils/logger');
 
 router.use(authenticate);
 
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
 
         res.json({ subscriptions });
     } catch (err) {
-        console.error('Get subscriptions error:', err.message);
+        logger.error('subs_list_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch subscriptions.' });
     }
 });
@@ -92,7 +93,7 @@ router.post('/', [
             connection.release();
         }
     } catch (err) {
-        console.error('Create subscription error:', err.message);
+        logger.error('subs_create_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to create subscription.' });
     }
 });
@@ -118,7 +119,7 @@ router.put('/:id/status', [
 
         res.json({ message: `Subscription ${req.body.status}.` });
     } catch (err) {
-        console.error('Update subscription error:', err.message);
+        logger.error('subs_update_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update subscription.' });
     }
 });
@@ -146,7 +147,7 @@ router.put('/:id/frequency', [
 
         res.json({ message: 'Frequency updated.', next_delivery: nextDelivery });
     } catch (err) {
-        console.error('Update frequency error:', err.message);
+        logger.error('subs_update_frequency_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to update frequency.' });
     }
 });

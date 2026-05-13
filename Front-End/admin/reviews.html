@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews - Sparko Admin</title>
+    <link rel="stylesheet" href="../css/sparkoTemplate.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/shop.css">
+    <link rel="icon" href="../Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo">
+            <a href="../index.html">Sparko</a>
+            <span style="font-family:'Harabara',sans-serif; font-size:2vh; color:#FF72B1;">ADMIN</span>
+        </div>
+        <nav class="dashboard-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="users.html">Users</a>
+            <a href="orders.html">Orders</a>
+            <a href="products.html">Products</a>
+            <a href="bundles.html">Bundles</a>
+            <a href="reviews.html" class="active">Reviews</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <h1 class="page-title">Review Moderation</h1>
+        <p style="font-family:'Harabara',sans-serif; color:#083D77; max-width:700px;">
+            Hide reviews that violate guidelines — they stay in the database but are
+            removed from the public product page. Use Delete only for spam.
+        </p>
+
+        <div class="filter-bar">
+            <select id="visibility-filter">
+                <option value="">All reviews</option>
+                <option value="false">Visible only</option>
+                <option value="true">Hidden only</option>
+            </select>
+        </div>
+
+        <div id="reviews-container">
+            <div class="empty-state"><p>Loading…</p></div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <footer class="dashboard-footer">Sparko Water Delivery Service · admin</footer>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/toast.js"></script>
+    <script src="../js/nav.js"></script>
+    <script>
+        if (!requireAdmin()) throw new Error('redirect');
+
+        let currentPage = 1;
+        const visFilter = document.getElementById('visibility-filter');
+        visFilter.addEventListener('change', () => { currentPage = 1; load(); });
+
+        load();
+
+        function stars(rating) {
+            const r = Math.round(Number(rating) || 0);
+            let s = '<span class="star-row">';
+            for (let i = 1; i <= 5; i++) {
+                s += '<span class="star ' + (i <= r ? 'filled' : '') + '">★</span>';
+            }
+            s += '</span>';
+            return s;
+        }
+
+        async function load(page) {
+            if (page) currentPage = page;
+            const container = document.getElementById('reviews-container');
+            const params = new URLSearchParams();
+            params.set('page', currentPage);
+            params.set('limit', 15);
+            if (visFilter.value) params.set('hidden', visFilter.value);
+
+            try {
+                const data = await api.get('/reviews/admin/all?' + params.toString());
+                if (!data.reviews.length) {
+                    container.innerHTML = '<div class="empty-state"><h3>No reviews</h3><p>Try changing the filter.</p></div>';
+                    document.getElementById('pagination').innerHTML = '';
+                    return;
+                }
+
+                let html = '';
+                for (const r of data.reviews) {
+                    html += '<div class="review-item" style="margin-bottom:1.5vh;">';
+                    html += '  <div class="review-head">';
+                    html += '    <span class="review-author">' + escapeHtml(r.username) + '</span>';
+                    html += '    on <strong>' + escapeHtml(r.product_name) + '</strong>';
+                    html += '    ' + stars(r.rating);
+                    html += '    <span class="review-date">' + escapeHtml(formatDate(r.created_at)) + '</span>';
+                    if (r.is_hidden) {
+                        html += '    <span class="badge badge-cancelled" style="margin-left:auto;">hidden</span>';
+                    }
+                    html += '  </div>';
+                    if (r.title)   html += '<div class="review-title-line">' + escapeHtml(r.title) + '</div>';
+                    if (r.comment) html += '<div class="review-comment">' + escapeHtml(r.comment) + '</div>';
+                    html += '  <div style="margin-top:1vh; display:flex; gap:0.5vw; flex-wrap:wrap;">';
+                    if (r.is_hidden) {
+                        html += '    <button class="btn btn-small btn-secondary" data-show="' + r.id + '">Unhide</button>';
+                    } else {
+                        html += '    <button class="btn btn-small btn-secondary" data-hide="' + r.id + '">Hide</button>';
+                    }
+                    html += '    <button class="btn btn-small btn-danger" data-del="' + r.id + '">Delete</button>';
+                    html += '  </div>';
+                    html += '</div>';
+                }
+                container.innerHTML = html;
+
+                for (const btn of container.querySelectorAll('[data-hide]')) {
+                    btn.addEventListener('click', () => setHidden(btn.dataset.hide, true));
+                }
+                for (const btn of container.querySelectorAll('[data-show]')) {
+                    btn.addEventListener('click', () => setHidden(btn.dataset.show, false));
+                }
+                for (const btn of container.querySelectorAll('[data-del]')) {
+                    btn.addEventListener('click', () => del(btn.dataset.del));
+                }
+
+                // Pagination buttons
+                const pag = data.pagination;
+                let p = '';
+                p += '<button ' + (pag.page <= 1 ? 'disabled' : '') + ' data-page="' + (pag.page - 1) + '">Prev</button>';
+                for (let i = 1; i <= pag.pages; i++) {
+                    p += '<button class="' + (i === pag.page ? 'active' : '') + '" data-page="' + i + '">' + i + '</button>';
+                }
+                p += '<button ' + (pag.page >= pag.pages ? 'disabled' : '') + ' data-page="' + (pag.page + 1) + '">Next</button>';
+                const pagEl = document.getElementById('pagination');
+                pagEl.innerHTML = p;
+                for (const b of pagEl.querySelectorAll('button[data-page]')) {
+                    b.addEventListener('click', () => load(parseInt(b.dataset.page, 10)));
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p>Could not load reviews.</p></div>';
+                toast(err.message || 'Failed to load.', { type: 'error' });
+            }
+        }
+
+        async function setHidden(id, hidden) {
+            try {
+                await api.put('/reviews/' + id + '/hide', { is_hidden: hidden });
+                toast(hidden ? 'Hidden.' : 'Unhidden.', { type: 'success' });
+                load();
+            } catch (err) {
+                toast(err.message || 'Update failed.', { type: 'error' });
+            }
+        }
+
+        async function del(id) {
+            if (!confirm('Permanently delete this review?')) return;
+            try {
+                await api.delete('/reviews/' + id);
+                toast('Deleted.', { type: 'success' });
+                load();
+            } catch (err) {
+                toast(err.message || 'Delete failed.', { type: 'error' });
+            }
+        }
+    </script>
+</body>
+</html>

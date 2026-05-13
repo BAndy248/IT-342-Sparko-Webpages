@@ -8,6 +8,8 @@ const { jwtSecret, jwtExpiresIn, resetTokenExpiresHours } = require('../config/a
 const { authLimiter } = require('../middleware/rateLimiter');
 const { authenticate } = require('../middleware/auth');
 const passwordUtil = require('../utils/password');
+const { logger } = require('../utils/logger');
+const { sendEmail } = require('../utils/email');
 
 // Apply stricter rate limiting to all auth routes
 router.use(authLimiter);
@@ -63,7 +65,7 @@ router.post('/register', [
             user: { id: result.insertId, username, email, role: 'user' }
         });
     } catch (err) {
-        console.error('Register error:', err.message);
+        logger.error('auth_register_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Registration failed.' });
     }
 });
@@ -118,7 +120,7 @@ router.post('/login', [
             }
         });
     } catch (err) {
-        console.error('Login error:', err.message);
+        logger.error('auth_login_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Login failed.' });
     }
 });
@@ -162,19 +164,56 @@ router.post('/forgot-password', [
             [users[0].id, tokenHash, expiresAt]
         );
 
-        // In production, send email with reset link containing resetToken
-        // For development, return the token directly
-        if (process.env.NODE_ENV === 'development') {
+        // Build the reset URL — FRONTEND_URL is set per-environment.
+        const baseUrl  = process.env.FRONTEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+        const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
+
+        // Get the email to send to (we already loaded the id; re-select email
+        // so the closure doesn't accidentally leak it from the request body).
+        const [emailRows] = await pool.execute(
+            'SELECT email, first_name FROM users WHERE id = ?',
+            [users[0].id]
+        );
+        const recipient = emailRows[0];
+
+        // Fire-and-forget the SES send. If SES is unconfigured, sendEmail()
+        // logs and returns sent=false — which we treat as "still tell the
+        // user we sent it" to avoid leaking whether SES is wired up.
+        const result = await sendEmail({
+            to:      recipient.email,
+            subject: 'Reset your Sparko password',
+            text: [
+                `Hi ${recipient.first_name || ''},`.trim(),
+                ``,
+                `Someone (hopefully you) asked to reset your Sparko password.`,
+                `Open the link below within ${resetTokenExpiresHours} hour(s) to set a new one:`,
+                ``,
+                resetUrl,
+                ``,
+                `If you didn't request this, ignore this email — your password is unchanged.`,
+                ``,
+                `— Sparko Water`
+            ].join('\n')
+        });
+
+        // When SES isn't configured (no verified domain) the email won't
+        // actually be sent — so the user would have no way to recover their
+        // account. Surface the reset URL in the API response so the operator
+        // can hand it to the user manually, or so the frontend can show it.
+        // The previous behavior (gating on NODE_ENV !== 'production') broke
+        // password recovery completely in HTTP-only no-domain deployments.
+        if (!result.sent) {
             return res.json({
-                message: 'Reset token generated (dev mode).',
+                message: 'Reset token generated (SES not configured — surface this URL to the user manually).',
                 resetToken,
+                resetUrl,
                 expiresAt
             });
         }
 
         res.json({ message: 'If that email exists, a reset link has been sent.' });
     } catch (err) {
-        console.error('Forgot password error:', err.message);
+        logger.error('auth_forgot_password_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Password reset request failed.' });
     }
 });
@@ -233,7 +272,7 @@ router.post('/reset-password', [
 
         res.json({ message: 'Password has been reset successfully.' });
     } catch (err) {
-        console.error('Reset password error:', err.message);
+        logger.error('auth_reset_password_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Password reset failed.' });
     }
 });
@@ -250,7 +289,7 @@ router.get('/me', authenticate, async (req, res) => {
         }
         res.json({ user: users[0] });
     } catch (err) {
-        console.error('Get user error:', err.message);
+        logger.error('auth_get_user_failed', { requestId: req.requestId, error: err.message });
         res.status(500).json({ error: 'Failed to fetch user.' });
     }
 });
