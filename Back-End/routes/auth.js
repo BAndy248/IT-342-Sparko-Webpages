@@ -196,11 +196,15 @@ router.post('/forgot-password', [
             ].join('\n')
         });
 
-        // Dev convenience: when SES isn't configured (sent=false, mode=disabled),
-        // surface the token directly so local testing works without AWS.
-        if (!result.sent && process.env.NODE_ENV !== 'production') {
+        // When SES isn't configured (no verified domain) the email won't
+        // actually be sent — so the user would have no way to recover their
+        // account. Surface the reset URL in the API response so the operator
+        // can hand it to the user manually, or so the frontend can show it.
+        // The previous behavior (gating on NODE_ENV !== 'production') broke
+        // password recovery completely in HTTP-only no-domain deployments.
+        if (!result.sent) {
             return res.json({
-                message: 'Reset token generated (dev mode — SES not configured).',
+                message: 'Reset token generated (SES not configured — surface this URL to the user manually).',
                 resetToken,
                 resetUrl,
                 expiresAt

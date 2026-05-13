@@ -57,6 +57,30 @@ provisioned end-to-end by Terraform.
 (See [`architecture.svg`](architecture.svg) for the formatted version when
 the SVG export is in the repo.)
 
+## No-domain mode
+
+When `domain_name = ""` in `terraform.tfvars`, the stack runs in **HTTP-only
+mode** suitable for a class demo without a registered domain name:
+
+- The public ALB serves HTTP only on port 80; no Route 53, no ACM cert.
+- Users access the site via the raw `*.elb.amazonaws.com` URL.
+- HSTS is disabled in the API (see `ENABLE_HSTS` env var) so browsers don't
+  cache an HTTPS-only pin that would brick future HTTP requests.
+- SES email is effectively disabled (no verified sender domain). The
+  password-reset endpoint returns the reset URL directly in its response so
+  operators can hand it to the user manually.
+- The Lambda subscription-renewal flow still runs but does not email customers.
+- CloudFront is provisioned but unused (no `cdn.<domain>` alias). It serves
+  static assets via its default `*.cloudfront.net` URL; the frontend doesn't
+  link to it. Cost ≈ \$1/mo. Remove [`s3_cloudfront.tf`](../infra/s3_cloudfront.tf)
+  if you want to skip it.
+- Square stays in **sandbox** mode regardless of credentials, because
+  Square's production card-tokenization requires HTTPS on the caller's origin.
+
+To upgrade to HTTPS later: register a domain, set `domain_name` + `route53_zone_id`
+in `terraform.tfvars`, also set `ENABLE_HSTS=true` in the API instance env, and
+re-apply.
+
 ## Layers
 
 ### Edge

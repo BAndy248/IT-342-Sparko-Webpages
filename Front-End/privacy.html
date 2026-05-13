@@ -65,7 +65,9 @@
         <ul>
             <li>Passwords are stored as PBKDF2-HMAC-SHA512 hashes with 210,000 iterations.</li>
             <li>Database storage is encrypted at rest (AWS KMS).</li>
-            <li>All traffic uses TLS 1.2+ between your browser and Sparko, and between Sparko and AWS services.</li>
+            <li>Traffic to AWS services (RDS, Secrets Manager, S3) is encrypted with TLS 1.2+.
+                Browser-to-Sparko traffic uses TLS 1.2+ <em>when a domain + TLS certificate are configured</em>;
+                this class-demo deployment runs over plain HTTP and should not be used with real customer data.</li>
             <li>Database access is limited to private VPC subnets and a strict security-group chain.</li>
         </ul>
 
@@ -74,7 +76,7 @@
             <li><strong>Access</strong>: see your profile, addresses, orders, and rewards in your account.</li>
             <li><strong>Correction</strong>: update your profile from the Profile page.</li>
             <li><strong>Deletion</strong>: email
-                <a href="mailto:support@sparkowater.example.com">support@sparkowater.example.com</a>
+                <a href="contact.html" title="Contact form">support@sparkowater.example.com</a>
                 to delete your account; we'll process the request within 30 days.</li>
             <li><strong>Export</strong>: ask support and we'll send you a JSON dump of your data.</li>
         </ul>
@@ -87,7 +89,7 @@
 
         <h2>Contact</h2>
         <p>Questions about privacy? Email
-        <a href="mailto:privacy@sparkowater.example.com">privacy@sparkowater.example.com</a>.</p>
+        <a href="contact.html" title="Contact form">privacy@sparkowater.example.com</a>.</p>
     </div>
 
     <div id="footer-mount"></div>

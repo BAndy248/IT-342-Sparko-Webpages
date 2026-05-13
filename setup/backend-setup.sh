@@ -159,6 +159,14 @@ CLOUDWATCH_RETENTION_DAYS=${CLOUDWATCH_RETENTION_DAYS:-30}
 SQUARE_ACCESS_TOKEN=${SQUARE_ACCESS_TOKEN:-}
 SQUARE_LOCATION_ID=${SQUARE_LOCATION_ID:-}
 SQUARE_ENVIRONMENT=${SQUARE_ENVIRONMENT:-sandbox}
+
+# HSTS — only emit Strict-Transport-Security when the site is HTTPS-fronted.
+# Default off so HTTP-only / no-domain deployments don't poison browser caches.
+ENABLE_HSTS=${ENABLE_HSTS:-false}
+
+# SES transactional email — empty disables sending (forgot-password returns
+# the reset URL in the API response instead).
+SES_FROM=${SES_FROM:-}
 EOF
     chown "$APP_USER:$APP_USER" "$env_file"
     chmod 0640 "$env_file"

@@ -47,7 +47,14 @@ app.set('trust proxy', process.env.TRUST_PROXY || 'loopback, linklocal, uniquelo
 app.use(requestLogger);
 
 // --- Security middleware ---
-app.use(helmet());
+// HSTS tells browsers "only use HTTPS for this host from now on". If the site
+// is served over plain HTTP (no domain / no ACM cert), sending HSTS can cause
+// browsers that previously cached the header to refuse future HTTP requests.
+// Disable it explicitly when ENABLE_HSTS is not 'true' — the default mode.
+// Set ENABLE_HSTS=true in .env once you front the ALB with HTTPS.
+app.use(helmet({
+    hsts: process.env.ENABLE_HSTS === 'true' ? undefined : false
+}));
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5500',
     credentials: true
