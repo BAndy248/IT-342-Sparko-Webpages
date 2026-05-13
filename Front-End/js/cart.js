@@ -1,13 +1,9 @@
 // Cart + checkout flow.
-// Square Web Payments SDK is loaded in the HTML — initialized lazily here.
+// Square Web Payments SDK is loaded on demand by loadSquare() (from
+// js/square-loader.js), which picks the right host (sandbox vs production)
+// based on /api/config.
 
 if (!requireAuth()) throw new Error('redirect');
-
-// Square publishable creds. In production these come from a /api/config
-// endpoint or are templated into the page server-side. We expose them on
-// window so it's easy to swap them out without redeploying the frontend.
-const SQUARE_APP_ID    = window.SQUARE_APP_ID    || 'sandbox-sq0idb-DEMO-PLACEHOLDER';
-const SQUARE_LOCATION  = window.SQUARE_LOCATION  || 'L-DEMO-PLACEHOLDER';
 
 let squareCard = null;
 let currentCart = null;
@@ -163,19 +159,26 @@ async function refreshPreview() {
 
 async function initSquare() {
     const status = document.getElementById('payment-status');
-    if (!window.Square) {
-        status.textContent = 'Card field unavailable (Square SDK did not load).';
-        return;
-    }
     try {
-        const payments = window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION);
+        // loadSquare() fetches /api/config, injects the correct SDK URL
+        // (sandbox vs production), then returns a ready Payments object.
+        const { payments, config } = await loadSquare();
         squareCard = await payments.card();
         await squareCard.attach('#card-container');
         status.textContent = '';
+        // Tiny banner so the operator can tell at a glance which mode is live.
+        if (config.environment === 'production') {
+            status.textContent = '';
+        } else {
+            status.textContent = 'Sandbox mode — use Square test card 4111 1111 1111 1111';
+        }
     } catch (e) {
-        // Most common cause: invalid placeholder app ID. The backend still
-        // accepts a stub source_id so the rest of the flow can be exercised.
-        status.textContent = 'Square card form unavailable — using stub mode for this demo.';
+        // Most common cause: invalid app id, blocked from non-HTTPS origin in
+        // production mode, or the backend is in stub mode. The backend's
+        // checkout route still accepts a stub source_id so the rest of the
+        // flow can be exercised without a working card field.
+        console.warn('Square SDK init failed:', e.message);
+        status.textContent = 'Card form unavailable: ' + e.message;
     }
 }
 

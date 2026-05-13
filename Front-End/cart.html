@@ -8,8 +8,9 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
-    <!-- Square Web Payments SDK (sandbox). Swap host for production. -->
-    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <!-- Square Web Payments SDK is loaded dynamically by cart.js after it
+         fetches /api/config — so the same HTML works for both sandbox and
+         production without baking the environment into the page. -->
 </head>
 <body>
     <header class="dashboard-header">
@@ -87,6 +88,8 @@
     <script src="js/footer.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/cart-badge.js"></script>
+    <script src="js/square-loader.js"></script>
     <script src="js/cart.js"></script>
+    <script src="js/tidio.js"></script>
 </body>
 </html>

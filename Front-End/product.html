@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading product… - Sparko</title>
+    <link rel="stylesheet" href="css/sparkoTemplate.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="icon" href="Images/SparkoIcon.svg">
+</head>
+<body>
+    <header class="dashboard-header">
+        <div class="logo"><a href="index.html">Sparko</a></div>
+        <nav class="dashboard-nav" id="main-nav">
+            <a href="products.html">Products</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="orders.html">Orders</a>
+            <a href="subscription.html">Subscription</a>
+            <a href="rewards.html">Rewards</a>
+            <a href="cart.html">Cart <span id="cart-badge" class="cart-badge" style="display:none;">0</span></a>
+            <a href="profile.html">Profile</a>
+            <button class="logout-btn" onclick="api.logout()">Logout</button>
+        </nav>
+    </header>
+
+    <div class="dashboard-content">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="products.html">Products</a>
+            <span class="breadcrumb-sep">›</span>
+            <span id="bc-name">…</span>
+        </nav>
+
+        <!-- Loading / error / not-found containers -->
+        <div id="loading" class="empty-state"><p>Loading product…</p></div>
+        <div id="not-found" class="empty-state" style="display:none;">
+            <h3>Product not found</h3>
+            <p>Try browsing the <a href="products.html" style="color:#FF72B1;">full catalog</a>.</p>
+        </div>
+
+        <!-- Product detail grid (filled by product.js) -->
+        <div id="product-detail" class="product-detail" style="display:none;">
+            <div class="product-detail-img">
+                <div class="product-detail-placeholder" id="img-letter">S</div>
+            </div>
+
+            <div class="product-detail-info">
+                <h1 class="product-detail-title" id="p-name">…</h1>
+                <div class="product-detail-meta">
+                    <span id="p-category"></span> · <span id="p-size"></span>
+                </div>
+
+                <div class="product-detail-rating">
+                    <span id="p-stars" class="star-row"></span>
+                    <span class="rating-text">
+                        <span id="p-avg">0.0</span> avg ·
+                        <span id="p-count">0</span> review(s)
+                    </span>
+                </div>
+
+                <div class="product-detail-price" id="p-price">$0.00</div>
+
+                <p class="product-description" id="p-description"></p>
+
+                <div class="add-to-cart-row">
+                    <label for="qty">Quantity</label>
+                    <input type="number" id="qty" value="1" min="1" max="100">
+                    <button class="btn btn-primary" id="add-btn">Add to cart</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews section -->
+        <section id="reviews-section" style="display:none;">
+            <hr class="divider">
+            <h2 class="reviews-title">Customer Reviews</h2>
+
+            <!-- Rating distribution bars -->
+            <div id="rating-summary" class="rating-summary"></div>
+
+            <!-- Write / edit review (only when logged in) -->
+            <div id="review-form-wrap"></div>
+
+            <!-- Review list -->
+            <div id="review-list" class="review-list"></div>
+        </section>
+
+        <!-- Login nudge for visitors who aren't authenticated -->
+        <div id="signin-nudge" class="empty-state" style="display:none;">
+            <h3>Sign in to leave a review</h3>
+            <p>You'll also earn 25 reward points for posting your first review on a product.</p>
+            <a href="login.html" class="btn btn-primary">Sign in</a>
+            <a href="register.html" class="btn btn-secondary" style="margin-left:1vw;">Create account</a>
+        </div>
+    </div>
+
+    <div id="footer-mount"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/cart-badge.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/product.js"></script>
+    <script src="js/tidio.js"></script>
+</body>
+</html>

@@ -98,6 +98,7 @@ app.use('/api/cart', require('./routes/cart'));
 app.use('/api/rewards', require('./routes/rewards'));
 app.use('/api/checkout', require('./routes/checkout'));
 app.use('/api/payment-methods', require('./routes/payment-methods'));
+app.use('/api/config', require('./routes/config'));
 
 // --- 404 fallback ---
 // Unknown /api/* paths return a JSON 404 instead of dumping the HTML page.

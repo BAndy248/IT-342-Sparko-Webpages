@@ -66,6 +66,7 @@ async function loadSecrets() {
     await fetchAndOverlay(appArn, {
         JWT_SECRET:          'JWT_SECRET',
         SQUARE_ACCESS_TOKEN: 'SQUARE_ACCESS_TOKEN',
+        SQUARE_APP_ID:       'SQUARE_APP_ID',
         SQUARE_LOCATION_ID:  'SQUARE_LOCATION_ID',
         SQUARE_ENVIRONMENT:  'SQUARE_ENVIRONMENT'
     });

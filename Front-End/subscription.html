@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/shop.css">
     <link rel="icon" href="Images/SparkoIcon.svg">
-    <!-- Square Web Payments SDK (sandbox host). Swap for production. -->
-    <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+    <!-- Square Web Payments SDK is loaded dynamically below after we fetch
+         /api/config so the same HTML serves both sandbox and production. -->
 </head>
 <body>
     <header class="dashboard-header">
@@ -102,12 +102,12 @@
     <script src="js/footer.js"></script>
     <script src="js/toast.js"></script>
     <script src="js/cart-badge.js"></script>
+    <script src="js/square-loader.js"></script>
     <script>
         if (!requireAuth()) throw new Error('redirect');
 
-        // Square Web Payments SDK — placeholder credentials work in stub mode.
-        const SQUARE_APP_ID   = window.SQUARE_APP_ID   || 'sandbox-sq0idb-DEMO-PLACEHOLDER';
-        const SQUARE_LOCATION = window.SQUARE_LOCATION || 'L-DEMO-PLACEHOLDER';
+        // Square Web Payments SDK is loaded by js/square-loader.js
+        // (driven by /api/config — auto-picks sandbox or production host).
         let squareCard = null;
 
         let allProducts = [];
@@ -121,16 +121,16 @@
 
         async function initSquareCard() {
             const status = document.getElementById('sub-card-status');
-            if (!window.Square) {
-                status.textContent = 'Card field unavailable (Square SDK did not load).';
-                return;
-            }
             try {
-                const payments = window.Square.payments(SQUARE_APP_ID, SQUARE_LOCATION);
+                const { payments, config } = await loadSquare();
                 squareCard = await payments.card();
                 await squareCard.attach('#sub-card-container');
+                if (config.environment !== 'production') {
+                    status.textContent = 'Sandbox mode — use test card 4111 1111 1111 1111';
+                }
             } catch (e) {
-                status.textContent = 'Card form unavailable — using stub mode for the demo.';
+                console.warn('Square SDK init failed:', e.message);
+                status.textContent = 'Card form unavailable: ' + e.message;
             }
         }
 
@@ -366,5 +366,6 @@
             }
         }
     </script>
+    <script src="js/tidio.js"></script>
 </body>
 </html>
