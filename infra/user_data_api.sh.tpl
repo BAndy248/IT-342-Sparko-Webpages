@@ -7,7 +7,9 @@ set -euxo pipefail
 exec > >(tee -a /var/log/sparko-userdata.log) 2>&1
 
 # ----- packages we need at boot ---------------------------------------------
-dnf install -y git jq aws-cli
+# aws-cli is preinstalled on AL2023; only install missing tools.
+# --allowerasing lets dnf swap curl-minimal for full curl without aborting.
+dnf install -y --allowerasing git jq
 
 # ----- pull the repo --------------------------------------------------------
 REPO_DIR=/opt/sparko-src
@@ -17,6 +19,11 @@ if [[ -d $REPO_DIR/.git ]]; then
 else
     git clone --depth 1 -b "${repo_branch}" "${repo_url}" "$REPO_DIR"
 fi
+
+# Patch setup/common.sh's PKG_INSTALL to include --allowerasing on AL2023.
+# The repo's main branch may not yet have this fix; this patch is applied
+# inline so the deploy succeeds regardless of upstream state. Idempotent.
+sed -i 's|PKG_INSTALL="dnf install -y"|PKG_INSTALL="dnf install -y --allowerasing"|' "$REPO_DIR/setup/common.sh"
 
 # ----- pull secrets from Secrets Manager -----------------------------------
 DB_SECRET=$(aws secretsmanager get-secret-value --secret-id "${db_secret_arn}" --region "${region}" --query SecretString --output text)

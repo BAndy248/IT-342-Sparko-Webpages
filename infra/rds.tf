@@ -20,7 +20,7 @@ resource "aws_db_subnet_group" "main" {
 resource "aws_db_parameter_group" "mysql8" {
   name        = "${local.name_prefix}-mysql8"
   family      = "mysql8.0"
-  description = "Sparko MySQL 8 params — slow query + general logs into CloudWatch"
+  description = "Sparko MySQL 8 params - slow query + general logs into CloudWatch"
 
   parameter {
     name  = "slow_query_log"
@@ -58,7 +58,7 @@ resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-mysql"
 
   engine            = "mysql"
-  engine_version    = "8.0.39"
+  engine_version    = "8.0.46"
   instance_class    = var.db_instance_class
   allocated_storage = var.db_allocated_storage
   storage_type      = "gp3"
@@ -83,15 +83,17 @@ resource "aws_db_instance" "main" {
   # Enable CloudWatch Logs export for the engine + slow query logs.
   enabled_cloudwatch_logs_exports = ["error", "general", "slowquery"]
 
-  monitoring_interval = 60
-  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
+  # Performance Insights + Enhanced Monitoring aren't supported on
+  # db.t3.micro / free tier. Turning them off costs nothing but the
+  # observability tradeoff is acceptable for a class demo.
+  monitoring_interval = 0
 
-  performance_insights_enabled          = true
-  performance_insights_retention_period = 7
+  performance_insights_enabled = false
 
-  deletion_protection       = var.environment == "prod"
-  skip_final_snapshot       = var.environment != "prod"
-  final_snapshot_identifier = var.environment == "prod" ? "${local.name_prefix}-mysql-final-${formatdate("YYYYMMDDhhmmss", timestamp())}" : null
+  # Free tier accounts also can't take final snapshots, and we don't want
+  # deletion protection during a class demo (makes terraform destroy fail).
+  deletion_protection = false
+  skip_final_snapshot = true
 
   apply_immediately = false
 

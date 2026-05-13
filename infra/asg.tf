@@ -82,7 +82,7 @@ resource "aws_autoscaling_group" "api" {
   vpc_zone_identifier       = [for s in aws_subnet.private_app : s.id]
   target_group_arns         = [aws_lb_target_group.api.arn]
   health_check_type         = "ELB"
-  health_check_grace_period = 180
+  health_check_grace_period = 600
   min_size                  = var.api_min_size
   max_size                  = var.api_max_size
   desired_capacity          = var.api_min_size
@@ -178,7 +178,7 @@ resource "aws_autoscaling_group" "web" {
   vpc_zone_identifier       = [for s in aws_subnet.private_app : s.id]
   target_group_arns         = [aws_lb_target_group.web.arn]
   health_check_type         = "ELB"
-  health_check_grace_period = 180
+  health_check_grace_period = 600
   min_size                  = var.web_min_size
   max_size                  = var.web_max_size
   desired_capacity          = var.web_min_size

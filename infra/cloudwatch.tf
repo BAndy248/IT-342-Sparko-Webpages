@@ -211,7 +211,7 @@ resource "aws_cloudwatch_dashboard" "main" {
 # ---------- WAF (regional, attached to public ALB) -------------------------
 resource "aws_wafv2_web_acl" "main" {
   name        = "${local.name_prefix}-waf"
-  description = "Public ALB WAF — common managed rule groups"
+  description = "Public ALB WAF - common managed rule groups"
   scope       = "REGIONAL"
 
   default_action {
